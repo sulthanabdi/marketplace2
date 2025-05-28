@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Database } from '@/types/supabase';
+import { UserCircleIcon } from '@heroicons/react/24/outline';
 
 type Product = Database['public']['Tables']['products']['Row'] & {
   seller: {
@@ -17,17 +18,14 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('id-ID').format(price);
-  };
+  console.log('ProductCard received product:', product);
 
-  // Debug logging
-  console.log('ProductCard data:', {
-    id: product.id,
-    seller_id: product.seller_id,
-    seller: product.seller,
-    seller_name: product.seller?.name
-  });
+  const formattedPrice = new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(product.price || 0);
 
   return (
     <motion.div
@@ -40,19 +38,20 @@ export default function ProductCard({ product }: ProductCardProps) {
       }}
       className="bg-white rounded-lg shadow-sm overflow-hidden group"
     >
-      <Link href={`/product/${product.id}`}>
+      <Link href={`/product/${product.id}`} className="block">
         <div className="relative h-48 overflow-hidden">
           <motion.div
             whileHover={{ scale: 1.1 }}
             transition={{ duration: 0.3 }}
+            className="relative w-full h-full"
           >
             <Image
-              src={product.image_url}
-              alt={product.title}
-              width={400}
-              height={300}
-              className="object-cover w-full h-full transition-transform duration-300"
-              priority
+              src={product.image_url || '/placeholder.png'}
+              alt={product.title || 'Product image'}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-cover transition-transform duration-300"
+              priority={false}
             />
           </motion.div>
           {product.is_sold && (
@@ -62,23 +61,16 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
         <div className="p-4">
-          <h3 className="text-lg font-medium text-gray-900 truncate group-hover:text-primary transition-colors duration-200">
-            {product.title}
+          <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2">
+            {product.title || 'Untitled Product'}
           </h3>
-          <p className="mt-1 text-sm text-gray-500 truncate">
-            {product.description}
+          <p className="text-xl font-bold text-blue-600 mb-2">
+            {formattedPrice}
           </p>
-          <div className="mt-2 flex items-center justify-between">
-            <p className="text-lg font-medium text-primary">
-              Rp {formatPrice(product.price)}
-            </p>
-            <p className="text-sm text-gray-500 capitalize">
-              {product.condition.replace('_', ' ')}
-            </p>
+          <div className="flex items-center text-sm text-gray-600">
+            <UserCircleIcon className="h-5 w-5 mr-1" />
+            <span>{product.seller?.name || 'Unknown Seller'}</span>
           </div>
-          <p className="mt-2 text-sm text-gray-500 group-hover:text-gray-700 transition-colors duration-200">
-            Seller: {product.seller?.name || 'Unknown'}
-          </p>
         </div>
       </Link>
     </motion.div>

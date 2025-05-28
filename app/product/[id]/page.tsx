@@ -15,7 +15,21 @@ async function getProduct(id: string) {
   // First get the product
   const { data: product, error: productError } = await supabase
     .from('products')
-    .select('*')
+    .select(`
+      id,
+      title,
+      description,
+      price,
+      image_url,
+      condition,
+      user_id,
+      is_sold,
+      created_at,
+      seller:users (
+        name,
+        whatsapp
+      )
+    `)
     .eq('id', id)
     .single();
 
@@ -25,8 +39,8 @@ async function getProduct(id: string) {
   }
 
   // Then get the seller info
-  function isValidProduct(product: any): product is { seller_id: string } {
-    return product && typeof product === 'object' && typeof product.seller_id === 'string';
+  function isValidProduct(product: any): product is { user_id: string } {
+    return product && typeof product === 'object' && typeof product.user_id === 'string';
   }
 
   let sellerData = null;
@@ -34,7 +48,7 @@ async function getProduct(id: string) {
     const { data: seller, error: sellerError } = await supabase
       .from('users')
       .select('name, whatsapp')
-      .eq('id', product.seller_id)
+      .eq('id', product.user_id)
       .single();
     sellerData = seller;
     if (sellerError) {
@@ -54,7 +68,7 @@ async function getProduct(id: string) {
       price: 0,
       image_url: '',
       condition: '',
-      seller_id: '',
+      user_id: '',
       is_sold: false,
       created_at: '',
       seller_name: 'Unknown',
@@ -117,7 +131,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
     );
   }
 
-  const isOwner = userId === product.seller_id;
+  const isOwner = userId === product.user_id;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -153,7 +167,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
                 </div>
                 <ProductActions
                   productId={product.id || ''}
-                  sellerId={product.seller_id || ''}
+                  sellerId={product.user_id || ''}
                   sellerWhatsapp={product.seller_whatsapp || ''}
                   title={product.title || ''}
                   isOwner={isOwner}
@@ -163,7 +177,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
                 />
                 <ProductDetail 
                   productId={product.id || ''}
-                  sellerId={product.seller_id || ''}
+                  sellerId={product.user_id || ''}
                   userId={userId || ''}
                 />
                 {!isOwner && !(product.is_sold || false) && (

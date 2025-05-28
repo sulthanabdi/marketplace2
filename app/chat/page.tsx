@@ -143,29 +143,13 @@ export default function ChatListPage() {
   useEffect(() => {
     fetchChats();
 
-    // Subscribe to new messages using a more browser-friendly approach
-    const channel = supabase
-      .channel('chat_list')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'messages',
-        },
-        () => {
-          console.log('New message received, refreshing chats...');
-          fetchChats();
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to chat list updates');
-        }
-      });
+    // Set up polling instead of realtime subscription
+    const pollInterval = setInterval(() => {
+      fetchChats();
+    }, 5000); // Poll every 5 seconds
 
     return () => {
-      channel.unsubscribe();
+      clearInterval(pollInterval);
     };
   }, [router, supabase]);
 

@@ -64,32 +64,13 @@ export default function ChatRoom({ productId, otherUserId, otherUserName, produc
 
     fetchMessages();
 
-    // Subscribe to new messages using a more browser-friendly approach
-    const channel = supabase
-      .channel(`messages:${productId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `product_id=eq.${productId}`,
-        },
-        (payload) => {
-          if (payload.new) {
-            setMessages((prev) => [...prev, payload.new as Message]);
-            scrollToBottom();
-          }
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to messages');
-        }
-      });
+    // Set up polling instead of realtime subscription
+    const pollInterval = setInterval(() => {
+      fetchMessages();
+    }, 3000); // Poll every 3 seconds
 
     return () => {
-      channel.unsubscribe();
+      clearInterval(pollInterval);
     };
   }, [productId, supabase]);
 

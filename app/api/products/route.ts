@@ -36,7 +36,7 @@ export async function POST(request: Request) {
         price,
         condition,
         image_url,
-        seller_id: session.user.id,
+        user_id: session.user.id,
       })
       .select()
       .single();
@@ -68,8 +68,10 @@ export async function GET(request: Request) {
       .from('products')
       .select(`
         *,
-        users:seller_id (name),
-        wishlists!inner (user_id)
+        seller:users (
+          name,
+          whatsapp
+        )
       `)
       .eq('is_sold', false)
       .order('created_at', { ascending: false });
@@ -88,6 +90,7 @@ export async function GET(request: Request) {
     const { data: products, error } = await query;
 
     if (error) {
+      console.error('Error fetching products:', error);
       return NextResponse.json(
         { error: 'Error fetching products' },
         { status: 500 }
