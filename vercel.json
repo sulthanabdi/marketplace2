@@ -1,0 +1,11 @@
+{
+  "buildCommand": "npm install --force && next build",
+  "installCommand": "npm install --force",
+  "framework": "nextjs",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ]
+} 
