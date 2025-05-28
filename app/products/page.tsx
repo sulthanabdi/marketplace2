@@ -16,7 +16,7 @@ export default async function ProductsPage({
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const supabase = createServerComponentClient<Database>({ cookies });
+    const supabase = createServerComponentClient<Database>({ cookies });
 
   // Check session
   const { data: { session } } = await supabase.auth.getSession();
@@ -27,9 +27,9 @@ export default async function ProductsPage({
   }
 
   // Get query parameters
-  const page = Number(searchParams.page) || 1;
-  const itemsPerPage = 12;
-  const offset = (page - 1) * itemsPerPage;
+    const page = Number(searchParams.page) || 1;
+    const itemsPerPage = 12;
+    const offset = (page - 1) * itemsPerPage;
 
   try {
     // Build query
@@ -68,16 +68,16 @@ export default async function ProductsPage({
     console.log('Raw products data:', products);
     
     const typedProducts = (products || []) as unknown as ProductWithSeller[];
-    
+
     return (
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-4">Products</h1>
         {typedProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {typedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
         ) : (
           <div className="text-center py-8">
             <p className="text-gray-500">No products found.</p>

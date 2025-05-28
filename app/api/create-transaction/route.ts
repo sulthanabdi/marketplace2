@@ -150,18 +150,18 @@ export async function POST(request: Request) {
     console.log('Transaction created:', transaction);
 
     try {
-      // Get Snap token
-      const transactionToken = await snap.createTransaction(parameter);
+    // Get Snap token
+    const transactionToken = await snap.createTransaction(parameter);
 
       console.log('Snap token received:', {
         token: transactionToken.token,
         redirect_url: transactionToken.redirect_url
       });
 
-      return NextResponse.json({
-        token: transactionToken.token,
-        redirect_url: transactionToken.redirect_url
-      });
+    return NextResponse.json({
+      token: transactionToken.token,
+      redirect_url: transactionToken.redirect_url
+    });
     } catch (midtransError) {
       console.error('Midtrans error:', midtransError);
       return NextResponse.json({ error: 'Failed to create payment' }, { status: 500 });

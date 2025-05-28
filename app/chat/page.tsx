@@ -145,7 +145,7 @@ export default function ChatListPage() {
 
     // Set up polling instead of realtime subscription
     const pollInterval = setInterval(() => {
-      fetchChats();
+          fetchChats();
     }, 5000); // Poll every 5 seconds
 
     return () => {
