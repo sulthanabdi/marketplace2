@@ -5,8 +5,11 @@ import crypto from 'crypto';
 
 export async function POST(request: Request) {
   try {
+    console.log('Webhook received:', new Date().toISOString());
     const supabase = createRouteHandlerClient({ cookies });
     const body = await request.json();
+    
+    console.log('Webhook payload:', JSON.stringify(body, null, 2));
     
     // Verify signature
     const expectedSignature = crypto
@@ -14,11 +17,19 @@ export async function POST(request: Request) {
       .update(body.order_id + body.status_code + body.gross_amount + process.env.MIDTRANS_SERVER_KEY)
       .digest('hex');
 
+    console.log('Signature verification:', {
+      received: body.signature_key,
+      expected: expectedSignature,
+      matches: body.signature_key === expectedSignature
+    });
+
     if (body.signature_key !== expectedSignature) {
+      console.error('Invalid signature');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
 
     const { transaction_status, order_id } = body;
+    console.log('Processing transaction:', { order_id, transaction_status });
 
     // Update transaction status
     const { error: updateError } = await supabase
@@ -34,20 +45,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to update transaction' }, { status: 500 });
     }
 
+    console.log('Transaction updated successfully');
+
     // If payment success, update product status
     if (transaction_status === 'capture' || transaction_status === 'settlement') {
+      console.log('Payment successful, updating product status');
       const { data: transaction, error: trxError } = await supabase
         .from('transactions')
         .select('product_id, buyer_id, seller_id')
         .eq('order_id', order_id)
         .single();
-      console.log('Webhook transaction data:', transaction, trxError);
+      
+      console.log('Transaction data:', { transaction, error: trxError });
 
       if (transaction) {
-        await supabase
+        const { error: productError } = await supabase
           .from('products')
           .update({ is_sold: true })
           .eq('id', transaction.product_id);
+        
+        console.log('Product update result:', { error: productError });
 
         // Insert notification for buyer
         const { error: notifErrorBuyer } = await supabase.from('notifications').insert({
@@ -56,7 +73,7 @@ export async function POST(request: Request) {
           title: 'Pembayaran Berhasil',
           body: 'Transaksi Anda telah berhasil dan produk siap diambil.',
         });
-        if (notifErrorBuyer) console.error('Notif insert error (buyer):', notifErrorBuyer);
+        console.log('Buyer notification result:', { error: notifErrorBuyer });
 
         // Insert notification for seller
         const { error: notifErrorSeller } = await supabase.from('notifications').insert({
@@ -65,7 +82,7 @@ export async function POST(request: Request) {
           title: 'Produk Terjual',
           body: 'Produk Anda telah terjual dan pembayaran sudah diterima.',
         });
-        if (notifErrorSeller) console.error('Notif insert error (seller):', notifErrorSeller);
+        console.log('Seller notification result:', { error: notifErrorSeller });
       } else {
         console.error('No transaction found for order_id:', order_id);
       }
