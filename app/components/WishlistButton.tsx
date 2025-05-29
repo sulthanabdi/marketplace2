@@ -1,8 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Database } from '@/types/supabase';
+import { useWishlist } from '@/app/context/WishlistContext';
 
 type Props = {
   productId: string;
@@ -10,42 +8,25 @@ type Props = {
 };
 
 export default function WishlistButton({ productId, isWishlisted: initialIsWishlisted }: Props) {
-  const [isWishlisted, setIsWishlisted] = useState(initialIsWishlisted);
-  const [isLoading, setIsLoading] = useState(false);
-  const supabase = createClientComponentClient<Database>();
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const isWishlisted = isInWishlist(productId);
 
   const toggleWishlist = async () => {
-    setIsLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      alert('Silakan login terlebih dahulu');
-      setIsLoading(false);
-      return;
-    }
-
     if (isWishlisted) {
-      // Hapus dari wishlist
-      const { error } = await supabase
-        .from('wishlists')
-        .delete()
-        .match({ user_id: user.id, product_id: productId });
-      if (!error) setIsWishlisted(false);
+      await removeFromWishlist(productId);
     } else {
-      // Tambah ke wishlist
-      const { error } = await supabase
-        .from('wishlists')
-        .insert({ user_id: user.id, product_id: productId });
-      if (!error) setIsWishlisted(true);
+      await addToWishlist(productId);
     }
-    setIsLoading(false);
   };
 
   return (
     <button
       onClick={toggleWishlist}
-      disabled={isLoading}
-      className="w-full px-6 py-3 rounded-md text-center font-medium transition-colors"
+      className={`w-full px-6 py-3 rounded-md text-center font-medium transition-colors ${
+        isWishlisted 
+          ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+      }`}
     >
       {isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
     </button>

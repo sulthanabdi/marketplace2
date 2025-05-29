@@ -5,10 +5,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Database } from '@/types/supabase';
-import RemoveFromWishlistButton from '@/app/components/RemoveFromWishlistButton';
+import { useWishlist } from '@/app/context/WishlistContext';
 import { WishlistProvider } from '@/app/context/WishlistContext';
 
-interface Products {
+interface Product {
   id: string;
   title: string;
   description: string;
@@ -19,71 +19,98 @@ interface Products {
   seller_whatsapp: string;
 }
 
-async function getWishlist(supabase: any, userId: string) {
-  const { data: products, error } = await supabase
-    .from('wishlists')
-    .select(`
-      *,
-      products:products(
-        *,
-        users:users(name, whatsapp)
-      )
-    `)
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching wishlist:', error);
-    return [];
-  }
-
-  return products.map((item: any) => ({
-    id: item.products.id,
-    title: item.products.title,
-    description: item.products.description,
-    price: item.products.price,
-    image_url: item.products.image_url,
-    condition: item.products.condition,
-    seller_name: item.products.users.name,
-    seller_whatsapp: item.products.users.whatsapp,
-  }));
-}
+type WishlistItem = {
+  products: {
+    id: string;
+    title: string;
+    description: string;
+    price: number;
+    image_url: string;
+    condition: string;
+    users: {
+      name: string;
+      whatsapp: string;
+    };
+  };
+};
 
 function WishlistContent() {
-  const [products, setProducts] = useState<Products[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const supabase = createClientComponentClient<Database>();
+  const { wishlist, removeFromWishlist } = useWishlist();
 
-  const fetchWishlist = async () => {
+  useEffect(() => {
+    const fetchWishlistProducts = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const wishlistProducts = await getWishlist(supabase, user.id);
-      setProducts(wishlistProducts);
+        const { data: wishlistItems, error } = await supabase
+          .from('wishlists')
+          .select(`
+            products:product_id (
+              id,
+              title,
+              description,
+              price,
+              image_url,
+              condition,
+              users:user_id (
+                name,
+                whatsapp
+              )
+            )
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching wishlist:', error);
+          return;
+        }
+
+        if (wishlistItems) {
+          // First cast to unknown to avoid type checking
+          const unknownItems = wishlistItems as unknown;
+          // Then cast to our expected type
+          const typedItems = unknownItems as WishlistItem[];
+          
+          const formattedProducts = typedItems
+            .map(item => item.products)
+            .filter(Boolean)
+            .map(product => ({
+              id: product.id,
+              title: product.title,
+              description: product.description,
+              price: product.price,
+              image_url: product.image_url,
+              condition: product.condition,
+              seller_name: product.users.name,
+              seller_whatsapp: product.users.whatsapp,
+            }));
+
+          setProducts(formattedProducts);
+        }
     } catch (error) {
-      console.error('Error fetching wishlist:', error);
+        console.error('Error:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchWishlist();
-
-    // Listen for wishlist updates
-    const handleWishlistUpdate = (event: CustomEvent) => {
-      setProducts(prev => prev.filter(p => p.id !== event.detail.productId));
-    };
-
-    window.addEventListener('wishlist-updated', handleWishlistUpdate as EventListener);
-    return () => {
-      window.removeEventListener('wishlist-updated', handleWishlistUpdate as EventListener);
-    };
-  }, []);
+    fetchWishlistProducts();
+  }, [supabase, wishlist]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading wishlist...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -104,7 +131,7 @@ function WishlistContent() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map((product: Products) => (
+            {products.map((product) => (
               <div
                 key={product.id}
                 className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
@@ -134,7 +161,12 @@ function WishlistContent() {
                   </div>
                 </Link>
                 <div className="px-4 pb-4">
-                  <RemoveFromWishlistButton productId={product.id} />
+                  <button
+                    onClick={() => removeFromWishlist(product.id)}
+                    className="w-full text-red-600 hover:text-red-700 text-sm font-medium"
+                  >
+                    Remove from wishlist
+                  </button>
                 </div>
               </div>
             ))}
