@@ -107,6 +107,35 @@ export async function POST(request: Request) {
       clientKey: process.env.MIDTRANS_CLIENT_KEY ? 'Set' : 'Not set'
     });
 
+    // Cek transaksi pending untuk produk dan user ini
+    const { data: existingPending, error: pendingError } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('product_id', productId)
+      .eq('buyer_id', session.user.id)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (pendingError && pendingError.code !== 'PGRST116') {
+      // PGRST116 = no rows found, aman diabaikan
+      console.error('Error checking pending transaction:', pendingError);
+      return NextResponse.json({ error: 'Failed to check pending transaction' }, { status: 500 });
+    }
+
+    if (existingPending) {
+      // Sudah ada transaksi pending, kembalikan Snap token lama jika ada
+      if (existingPending.snap_token) {
+        return NextResponse.json({
+          token: existingPending.snap_token,
+          redirect_url: existingPending.snap_redirect_url || null
+        });
+      } else {
+        // Snap token belum ada, lanjut proses seperti biasa (fallback)
+      }
+    }
+
     // Create transaction parameters
     const parameter = {
       transaction_details: {
@@ -157,6 +186,15 @@ export async function POST(request: Request) {
         token: transactionToken.token,
         redirect_url: transactionToken.redirect_url
       });
+
+    // Simpan snap_token dan snap_redirect_url ke transaksi
+    await supabase
+      .from('transactions')
+      .update({
+        snap_token: transactionToken.token,
+        snap_redirect_url: transactionToken.redirect_url
+      })
+      .eq('order_id', parameter.transaction_details.order_id);
 
     return NextResponse.json({
       token: transactionToken.token,

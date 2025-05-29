@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { Database } from '@/types/supabase';
 import ProductCard from '@/app/components/ProductCard';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 
 type ProductWithSeller = Database['public']['Tables']['products']['Row'] & {
   seller: {
@@ -30,10 +31,14 @@ export default async function ProductsPage({
     const page = Number(searchParams.page) || 1;
     const itemsPerPage = 12;
     const offset = (page - 1) * itemsPerPage;
+    const search = typeof searchParams.search === 'string' ? searchParams.search.trim() : '';
+    const condition = typeof searchParams.condition === 'string' ? searchParams.condition.trim() : '';
+    const minPrice = typeof searchParams.minPrice === 'string' && searchParams.minPrice !== '' ? Number(searchParams.minPrice) : undefined;
+    const maxPrice = typeof searchParams.maxPrice === 'string' && searchParams.maxPrice !== '' ? Number(searchParams.maxPrice) : undefined;
 
   try {
     // Build query
-    const { data: products, error } = await supabase
+    let query = supabase
       .from('products')
       .select(`
         id,
@@ -53,6 +58,21 @@ export default async function ProductsPage({
       .eq('is_sold', false)
       .order('created_at', { ascending: false });
 
+    if (search) {
+      query = query.ilike('title', `%${search}%`);
+    }
+    if (condition && (condition === 'new' || condition === 'used')) {
+      query = query.eq('condition', condition);
+    }
+    if (minPrice !== undefined && !isNaN(minPrice)) {
+      query = query.gte('price', minPrice);
+    }
+    if (maxPrice !== undefined && !isNaN(maxPrice)) {
+      query = query.lte('price', maxPrice);
+    }
+
+    const { data: products, error } = await query;
+
     if (error) {
       console.error('Error fetching products:', error);
       return (
@@ -69,9 +89,47 @@ export default async function ProductsPage({
     
     const typedProducts = (products || []) as unknown as ProductWithSeller[];
 
+    // UI: Search & Filter
     return (
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-4">Products</h1>
+        <form className="mb-6 flex flex-wrap gap-4 items-end" method="GET">
+          <input
+            type="text"
+            name="search"
+            placeholder="Search products..."
+            defaultValue={search}
+            className="border rounded px-3 py-2 w-48"
+          />
+          <select name="condition" defaultValue={condition} className="border rounded px-3 py-2">
+            <option value="">All Conditions</option>
+            <option value="new">New</option>
+            <option value="used">Used</option>
+          </select>
+          <input
+            type="number"
+            name="minPrice"
+            placeholder="Min Price"
+            defaultValue={minPrice ?? ''}
+            className="border rounded px-3 py-2 w-28"
+            min={0}
+          />
+          <input
+            type="number"
+            name="maxPrice"
+            placeholder="Max Price"
+            defaultValue={maxPrice ?? ''}
+            className="border rounded px-3 py-2 w-28"
+            min={0}
+          />
+          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Search
+          </button>
+          <Link href="/products" className="ml-2 text-blue-600 underline text-sm">Reset</Link>
+        </form>
+        <div className="mb-4 text-sm text-gray-600">
+          {typedProducts.length} product(s) found
+        </div>
         {typedProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {typedProducts.map((product) => (
@@ -80,7 +138,8 @@ export default async function ProductsPage({
               </div>
         ) : (
           <div className="text-center py-8">
-            <p className="text-gray-500">No products found.</p>
+            <p className="text-gray-500 mb-2">No products found.</p>
+            <p className="text-gray-400 text-sm">Coba kurangi filter atau klik <Link href="/products" className="text-blue-600 underline">Reset</Link></p>
           </div>
         )}
       </div>

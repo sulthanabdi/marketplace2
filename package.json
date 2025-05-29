@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
-    "@radix-ui/react-slot": "1.0.2",
+    "@radix-ui/react-slot": "^1.0.2",
+    "@radix-ui/react-tabs": "^1.1.12",
     "@supabase/auth-helpers-nextjs": "0.8.7",
     "@supabase/supabase-js": "2.38.4",
     "bcryptjs": "^3.0.2",

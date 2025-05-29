@@ -62,11 +62,21 @@ export default function PaymentButton({ productId, amount }: PaymentButtonProps)
       window.snap.pay(token, {
         onSuccess: function(result: any) {
           console.log('Payment success:', result);
-          router.push('/transactions');
+          const orderId = result.order_id || (result && result.transaction_id) || undefined;
+          if (orderId) {
+            router.push(`/payment-success?orderId=${orderId}`);
+          } else {
+            router.push('/payment-success');
+          }
         },
         onPending: function(result: any) {
           console.log('Payment pending:', result);
-          router.push('/transactions');
+          const orderId = result.order_id || (result && result.transaction_id) || undefined;
+          if (orderId) {
+            router.push(`/payment-success?orderId=${orderId}`);
+          } else {
+            router.push('/payment-success');
+          }
         },
         onError: function(result: any) {
           console.error('Payment error:', result);

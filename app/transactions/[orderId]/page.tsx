@@ -146,6 +146,22 @@ export default async function TransactionPage({ params }: { params: { orderId: s
               </div>
             </div>
 
+            {/* Instruksi pengambilan barang & tombol chat penjual */}
+            {transaction.status === 'success' && transaction.product.seller.whatsapp && (
+              <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h2 className="text-lg font-semibold mb-2 text-blue-800">Instruksi Pengambilan Barang</h2>
+                <p className="mb-3 text-blue-700">Pembayaran berhasil! Silakan hubungi penjual untuk janjian pengambilan barang secara langsung.</p>
+                <a
+                  href={`https://wa.me/${transaction.product.seller.whatsapp.replace(/^0/, '62')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                >
+                  Chat Penjual via WhatsApp
+                </a>
+              </div>
+            )}
+
             <div className="mt-8">
               <Link
                 href="/"
