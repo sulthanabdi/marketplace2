@@ -11,6 +11,7 @@ type Product = Database['public']['Tables']['products']['Row'] & {
     name: string;
     whatsapp: string;
   } | null;
+  category?: string;
 };
 
 interface ProductCardProps {
@@ -64,6 +65,11 @@ export default function ProductCard({ product }: ProductCardProps) {
           <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2">
             {product.title || 'Untitled Product'}
           </h3>
+          {product.category && (
+            <div className="inline-block mb-2 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">
+              {product.category}
+            </div>
+          )}
           <p className="text-xl font-bold text-blue-600 mb-2">
             {formattedPrice}
           </p>

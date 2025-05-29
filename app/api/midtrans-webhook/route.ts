@@ -36,17 +36,38 @@ export async function POST(request: Request) {
 
     // If payment success, update product status
     if (transaction_status === 'capture' || transaction_status === 'settlement') {
-      const { data: transaction } = await supabase
+      const { data: transaction, error: trxError } = await supabase
         .from('transactions')
-        .select('product_id')
+        .select('product_id, buyer_id, seller_id')
         .eq('order_id', order_id)
         .single();
+      console.log('Webhook transaction data:', transaction, trxError);
 
       if (transaction) {
         await supabase
           .from('products')
           .update({ is_sold: true })
           .eq('id', transaction.product_id);
+
+        // Insert notification for buyer
+        const { error: notifErrorBuyer } = await supabase.from('notifications').insert({
+          user_id: transaction.buyer_id,
+          type: 'transaction',
+          title: 'Pembayaran Berhasil',
+          body: 'Transaksi Anda telah berhasil dan produk siap diambil.',
+        });
+        if (notifErrorBuyer) console.error('Notif insert error (buyer):', notifErrorBuyer);
+
+        // Insert notification for seller
+        const { error: notifErrorSeller } = await supabase.from('notifications').insert({
+          user_id: transaction.seller_id,
+          type: 'transaction',
+          title: 'Produk Terjual',
+          body: 'Produk Anda telah terjual dan pembayaran sudah diterima.',
+        });
+        if (notifErrorSeller) console.error('Notif insert error (seller):', notifErrorSeller);
+      } else {
+        console.error('No transaction found for order_id:', order_id);
       }
     }
 

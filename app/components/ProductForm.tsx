@@ -12,6 +12,7 @@ interface ProductFormProps {
     condition: string;
     description: string;
     image_url: string;
+    category: string;
   };
   onSubmit: (data: FormData) => Promise<void>;
 }
@@ -23,10 +24,11 @@ export default function ProductForm({ initialData, onSubmit }: ProductFormProps)
 
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
-    price: initialData?.price || '',
+    price: initialData?.price !== undefined ? String(initialData.price) : '',
     condition: initialData?.condition || '',
     description: initialData?.description || '',
     image_url: initialData?.image_url || '',
+    category: initialData?.category || '',
   });
 
   const validateForm = () => {
@@ -50,12 +52,14 @@ export default function ProductForm({ initialData, onSubmit }: ProductFormProps)
 
     if (!formData.description.trim()) {
       newErrors.description = 'Description is required';
-    } else if (formData.description.length < 10) {
-      newErrors.description = 'Description must be at least 10 characters';
     }
 
     if (!initialData && !formData.image_url) {
       newErrors.image_url = 'Image is required';
+    }
+
+    if (!formData.category) {
+      newErrors.category = 'Category is required';
     }
 
     setErrors(newErrors);
@@ -72,8 +76,13 @@ export default function ProductForm({ initialData, onSubmit }: ProductFormProps)
     setIsSubmitting(true);
 
     try {
-      await onSubmit(formData as any);
-      router.push('/my-products');
+      await onSubmit({ ...formData, price: Number(formData.price) } as any);
+      if (initialData && (initialData as any).id) {
+        alert('Produk berhasil di-update!');
+        router.push(`/product/${(initialData as any).id}`);
+      } else {
+        router.push('/my-products');
+      }
     } catch (error) {
       console.error('Error submitting form:', error);
       setErrors({
@@ -133,7 +142,9 @@ export default function ProductForm({ initialData, onSubmit }: ProductFormProps)
           Price (Rp)
         </label>
         <input
-          type="number"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           id="price"
           name="price"
           value={formData.price}
@@ -171,6 +182,34 @@ export default function ProductForm({ initialData, onSubmit }: ProductFormProps)
         </select>
         {errors.condition && (
           <p className="mt-1 text-sm text-red-600">{errors.condition}</p>
+        )}
+      </div>
+
+      <div>
+        <label
+          htmlFor="category"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Category
+        </label>
+        <select
+          id="category"
+          name="category"
+          value={formData.category}
+          onChange={handleChange}
+          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm ${
+            errors.category ? 'border-red-500' : ''
+          }`}
+        >
+          <option value="">Select category</option>
+          <option value="Elektronik">Elektronik</option>
+          <option value="Fashion">Fashion</option>
+          <option value="Buku">Buku</option>
+          <option value="Aksesoris">Aksesoris</option>
+          <option value="Lainnya">Lainnya</option>
+        </select>
+        {errors.category && (
+          <p className="mt-1 text-sm text-red-600">{errors.category}</p>
         )}
       </div>
 

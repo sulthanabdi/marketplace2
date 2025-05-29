@@ -51,6 +51,7 @@ export default function UploadPage() {
           price: Number(formData.get('price')),
           condition: formData.get('condition'),
           image_url: imageUrl,
+          category: formData.get('category'),
         }),
       });
 
@@ -58,6 +59,11 @@ export default function UploadPage() {
         const productError = await productRes.json();
         throw new Error(productError.error || 'Failed to create product');
       }
+
+      const product = await productRes.json();
+      alert('Produk berhasil di-upload!');
+      router.push(`/product/${product.id}`);
+      return;
 
       router.push('/my-products');
       router.refresh();
@@ -147,6 +153,25 @@ export default function UploadPage() {
                 <option value="like_new">Like New</option>
                 <option value="good">Good</option>
                 <option value="fair">Fair</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+                Category
+              </label>
+              <select
+                name="category"
+                id="category"
+                required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+              >
+                <option value="">Select category</option>
+                <option value="Elektronik">Elektronik</option>
+                <option value="Fashion">Fashion</option>
+                <option value="Buku">Buku</option>
+                <option value="Aksesoris">Aksesoris</option>
+                <option value="Lainnya">Lainnya</option>
               </select>
             </div>
 

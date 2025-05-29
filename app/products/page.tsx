@@ -35,6 +35,7 @@ export default async function ProductsPage({
     const condition = typeof searchParams.condition === 'string' ? searchParams.condition.trim() : '';
     const minPrice = typeof searchParams.minPrice === 'string' && searchParams.minPrice !== '' ? Number(searchParams.minPrice) : undefined;
     const maxPrice = typeof searchParams.maxPrice === 'string' && searchParams.maxPrice !== '' ? Number(searchParams.maxPrice) : undefined;
+    const category = typeof searchParams.category === 'string' ? searchParams.category.trim() : '';
 
   try {
     // Build query
@@ -47,6 +48,7 @@ export default async function ProductsPage({
         price,
         image_url,
         condition,
+        category,
         user_id,
         is_sold,
         created_at,
@@ -69,6 +71,9 @@ export default async function ProductsPage({
     }
     if (maxPrice !== undefined && !isNaN(maxPrice)) {
       query = query.lte('price', maxPrice);
+    }
+    if (category) {
+      query = query.eq('category', category);
     }
 
     const { data: products, error } = await query;
@@ -101,6 +106,14 @@ export default async function ProductsPage({
             defaultValue={search}
             className="border rounded px-3 py-2 w-48"
           />
+          <select name="category" defaultValue={category} className="border rounded px-3 py-2">
+            <option value="">All Categories</option>
+            <option value="Elektronik">Elektronik</option>
+            <option value="Fashion">Fashion</option>
+            <option value="Buku">Buku</option>
+            <option value="Aksesoris">Aksesoris</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
           <select name="condition" defaultValue={condition} className="border rounded px-3 py-2">
             <option value="">All Conditions</option>
             <option value="new">New</option>
@@ -129,7 +142,7 @@ export default async function ProductsPage({
         </form>
         <div className="mb-4 text-sm text-gray-600">
           {typedProducts.length} product(s) found
-        </div>
+            </div>
         {typedProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {typedProducts.map((product) => (

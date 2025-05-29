@@ -18,10 +18,10 @@ export default async function DashboardPage() {
   }
 
   const { data: user } = await supabase
-    .from('users')
-    .select('*')
+      .from('users')
+      .select('*')
     .eq('id', session.user.id)
-    .single();
+      .single();
 
   const { data: products } = await supabase
     .from('products')
@@ -57,14 +57,17 @@ export default async function DashboardPage() {
     .eq('seller_id', session.user.id)
     .order('created_at', { ascending: false });
 
-  return (
+    return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">Welcome back, {user?.name || 'User'}</p>
+          <Link href="/transactions" className="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            Lihat Riwayat Transaksi
+          </Link>
         </div>
-        <Link href="/products/new">
+        <Link href="/upload">
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
             Add New Product
@@ -108,7 +111,7 @@ export default async function DashboardPage() {
                           fill
                           className="object-cover rounded-l-lg"
                         />
-                      </div>
+          </div>
                       <div className="flex-1 p-4">
                         <CardTitle className="text-lg">{product.title}</CardTitle>
                         <CardDescription className="mt-1">
@@ -117,10 +120,10 @@ export default async function DashboardPage() {
                         <p className="text-sm text-muted-foreground mt-2">
                           {product.is_sold ? 'Sold' : 'Available'}
                         </p>
-                      </div>
+          </div>
                     </div>
-                  </Card>
-                </Link>
+              </Card>
+              </Link>
               ))}
             </div>
           )}
@@ -140,7 +143,7 @@ export default async function DashboardPage() {
                   <Card className="hover:shadow-lg transition-shadow">
                     <div className="flex">
                       <div className="relative w-24 h-24 flex-shrink-0">
-                        <Image
+                    <Image
                           src={purchase.products.image_url}
                           alt={purchase.products.title}
                           fill
@@ -156,12 +159,12 @@ export default async function DashboardPage() {
                           Status: {purchase.status}
                         </p>
                       </div>
-                    </div>
+                  </div>
                   </Card>
                 </Link>
               ))}
-            </div>
-          )}
+          </div>
+        )}
         </TabsContent>
 
         <TabsContent value="sales" className="space-y-4">
@@ -178,13 +181,13 @@ export default async function DashboardPage() {
                   <Card className="hover:shadow-lg transition-shadow">
                     <div className="flex">
                       <div className="relative w-24 h-24 flex-shrink-0">
-                        <Image
+                  <Image
                           src={sale.products.image_url}
                           alt={sale.products.title}
-                          fill
+                    fill
                           className="object-cover rounded-l-lg"
-                        />
-                      </div>
+                  />
+                </div>
                       <div className="flex-1 p-4">
                         <CardTitle className="text-lg">{sale.products.title}</CardTitle>
                         <CardDescription className="mt-1">
@@ -192,14 +195,14 @@ export default async function DashboardPage() {
                         </CardDescription>
                         <p className="text-sm text-muted-foreground mt-2">
                           Status: {sale.status}
-                        </p>
-                      </div>
+                  </p>
                     </div>
+                  </div>
                   </Card>
-                </Link>
-              ))}
-            </div>
-          )}
+              </Link>
+            ))}
+                </div>
+              )}
         </TabsContent>
       </Tabs>
     </div>

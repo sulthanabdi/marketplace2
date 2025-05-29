@@ -50,6 +50,7 @@ export default function EditProductPage() {
         price: Number(formData.price),
         condition: formData.condition,
         image_url: formData.image_url,
+        category: formData.category,
       })
       .eq('id', id);
     if (error) {
