@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 type ProductWithSeller = Database['public']['Tables']['products']['Row'] & {
+  category?: string;
   seller: {
     name: string;
     whatsapp: string;
@@ -39,44 +40,47 @@ export default function ProductsPage() {
       setLoading(true);
       setError(null);
 
-      let query = supabase
-        .from('products')
-        .select(`
-          id,
-          title,
-          description,
-          price,
-          image_url,
-          condition,
-          category,
-          user_id,
-          is_sold,
-          created_at,
-          seller:users (
-            name,
-            whatsapp
-          )
-        `)
-        .eq('is_sold', false)
-        .order('created_at', { ascending: false });
+    let query = supabase
+      .from('products')
+      .select(`
+        id,
+        title,
+        description,
+        price,
+        image_url,
+        condition,
+        category,
+        user_id,
+        is_sold,
+        created_at,
+        updated_at,
+        status,
+        verified_at,
+        seller:user_id (
+          name,
+          whatsapp
+        )
+      `)
+      .eq('is_sold', false)
+      .order('created_at', { ascending: false });
 
       if (filters) {
         if (filters.search) {
           query = query.ilike('title', `%${filters.search}%`);
-        }
+    }
         if (filters.category) {
           query = query.eq('category', filters.category);
         }
         if (filters.condition) {
           query = query.eq('condition', filters.condition);
-        }
+    }
         if (filters.minPrice) {
           query = query.gte('price', parseInt(filters.minPrice));
-        }
+    }
         if (filters.maxPrice) {
           query = query.lte('price', parseInt(filters.maxPrice));
         }
-      }
+    }
 
       const { data, error } = await query;
 
@@ -94,7 +98,7 @@ export default function ProductsPage() {
   };
 
   if (loading) {
-    return (
+      return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="animate-pulse space-y-8">
@@ -113,10 +117,10 @@ export default function ProductsPage() {
               ))}
             </div>
           </div>
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
   if (error) {
     return (
@@ -128,7 +132,7 @@ export default function ProductsPage() {
                 <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
-              </div>
+            </div>
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800">Error loading products</h3>
                 <div className="mt-2 text-sm text-red-700">{error}</div>

@@ -12,94 +12,85 @@ export interface Database {
       products: {
         Row: {
           id: string
-          name: string
+          title: string
           description: string
           price: number
-          stock: number
-          category_id: string
-          seller_id: string
           image_url: string
-          is_verified: boolean
+          condition: string
+          user_id: string
+          is_sold: boolean
           created_at: string
-          updated_at: string
         }
         Insert: {
           id?: string
-          name: string
+          title: string
           description: string
           price: number
-          stock: number
-          category_id: string
-          seller_id: string
           image_url: string
-          is_verified?: boolean
+          condition: string
+          user_id: string
+          is_sold?: boolean
           created_at?: string
-          updated_at?: string
         }
         Update: {
           id?: string
-          name?: string
+          title?: string
           description?: string
           price?: number
-          stock?: number
-          category_id?: string
-          seller_id?: string
           image_url?: string
-          is_verified?: boolean
+          condition?: string
+          user_id?: string
+          is_sold?: boolean
           created_at?: string
-          updated_at?: string
         }
       }
       users: {
         Row: {
           id: string
           name: string
-          email: string
           whatsapp: string
-          role: 'admin' | 'user'
-          is_verified: boolean
           created_at: string
-          updated_at: string
         }
         Insert: {
           id: string
           name: string
-          email: string
           whatsapp: string
-          role?: 'admin' | 'user'
-          is_verified?: boolean
           created_at?: string
-          updated_at?: string
         }
         Update: {
           id?: string
           name?: string
-          email?: string
           whatsapp?: string
-          role?: 'admin' | 'user'
-          is_verified?: boolean
           created_at?: string
-          updated_at?: string
         }
       }
-      categories: {
+      messages: {
         Row: {
           id: string
-          name: string
+          sender_id: string
+          receiver_id: string
+          product_id: string
+          message: string
+          is_read: boolean
           created_at: string
-          updated_at: string
         }
         Insert: {
           id?: string
-          name: string
+          sender_id: string
+          receiver_id: string
+          product_id: string
+          message: string
+          is_read?: boolean
           created_at?: string
-          updated_at?: string
         }
         Update: {
           id?: string
-          name?: string
+          sender_id?: string
+          receiver_id?: string
+          product_id?: string
+          message?: string
+          is_read?: boolean
           created_at?: string
-          updated_at?: string
         }
       }
       wishlists: {
@@ -122,6 +113,29 @@ export interface Database {
           created_at?: string
         }
       }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          message: string
+          is_read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          message: string
+          is_read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          message?: string
+          is_read?: boolean
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -133,4 +147,17 @@ export interface Database {
       [_ in never]: never
     }
   }
-} 
+}
+
+// Extended types for components
+export type Product = Database['public']['Tables']['products']['Row'] & {
+  seller: {
+    name: string;
+    whatsapp: string;
+  } | null;
+};
+
+export type User = Database['public']['Tables']['users']['Row'];
+export type Wishlist = Database['public']['Tables']['wishlists']['Row'];
+export type Notification = Database['public']['Tables']['notifications']['Row'];
+export type Message = Database['public']['Tables']['messages']['Row']; 

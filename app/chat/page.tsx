@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Database } from '@/types/supabase';
+import {  Database } from '@/types/supabase';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -19,25 +19,20 @@ interface Chat {
   unread_count: number;
 }
 
-interface Message {
-  id: string;
-  product_id: string;
-  message: string;
-  created_at: string;
-  sender_id: string;
-  receiver_id: string;
-  is_read: boolean;
+type MessageWithRelations = Database['public']['Tables']['messages']['Row'] & {
   products: {
     title: string;
     image_url: string;
   };
   sender: {
+    id: string;
     name: string;
   };
   receiver: {
+    id: string;
     name: string;
   };
-}
+};
 
 export default function ChatListPage() {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -55,7 +50,7 @@ export default function ChatListPage() {
 
       console.log('Current user:', user.id);
 
-      // Get all messages for the current user
+      // Get all messages for the current user with related data
       const { data: messages, error } = await supabase
         .from('messages')
         .select(`
@@ -66,14 +61,16 @@ export default function ChatListPage() {
           sender_id,
           receiver_id,
           is_read,
-          products!inner (
+          products (
             title,
             image_url
           ),
-          sender:users!messages_sender_id_fkey (
+          sender:sender_id (
+            id,
             name
           ),
-          receiver:users!messages_receiver_id_fkey (
+          receiver:receiver_id (
+            id,
             name
           )
         `)
@@ -85,9 +82,11 @@ export default function ChatListPage() {
         throw error;
       }
 
-      console.log('Raw messages from Supabase:', messages);
+      const typedMessages = messages as unknown as MessageWithRelations[];
 
-      if (!messages || messages.length === 0) {
+      console.log('Raw messages from Supabase:', typedMessages);
+
+      if (!typedMessages || typedMessages.length === 0) {
         console.log('No messages found');
         setChats([]);
         return;
@@ -95,7 +94,7 @@ export default function ChatListPage() {
 
       // Group messages by product and get the latest message for each chat
       const chatMap = new Map<string, Chat>();
-      (messages as unknown as Message[]).forEach((msg) => {
+      typedMessages.forEach((msg) => {
         console.log('Processing message:', msg);
 
         if (!msg.products || !msg.sender || !msg.receiver) {
@@ -145,7 +144,7 @@ export default function ChatListPage() {
 
     // Set up polling instead of realtime subscription
     const pollInterval = setInterval(() => {
-          fetchChats();
+      fetchChats();
     }, 5000); // Poll every 5 seconds
 
     return () => {
