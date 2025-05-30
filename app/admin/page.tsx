@@ -15,10 +15,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Users, Package, Wallet, AlertTriangle, RefreshCw } from 'lucide-react';
-import AdminUsers from './components/AdminUsers';
-import AdminProducts from './components/AdminProducts';
-import AdminWithdrawals from './components/AdminWithdrawals';
-import AdminReports from './components/AdminReports';
 
 interface Stats {
   totalUsers: number;
@@ -191,16 +187,16 @@ export default function AdminPage() {
             <TabsTrigger value="reports">Reports</TabsTrigger>
           </TabsList>
           <TabsContent value="users">
-            <AdminUsers />
+            {/* AdminUsers component */}
           </TabsContent>
           <TabsContent value="products">
-            <AdminProducts />
+            {/* AdminProducts component */}
           </TabsContent>
           <TabsContent value="withdrawals">
-            <AdminWithdrawals />
+            {/* AdminWithdrawals component */}
           </TabsContent>
           <TabsContent value="reports">
-            <AdminReports />
+            {/* AdminReports component */}
           </TabsContent>
         </Tabs>
       </div>
@@ -251,16 +247,16 @@ export default function AdminPage() {
           <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
         <TabsContent value="users">
-          <AdminUsers />
+          {/* AdminUsers component */}
         </TabsContent>
         <TabsContent value="products">
-          <AdminProducts />
+          {/* AdminProducts component */}
         </TabsContent>
         <TabsContent value="withdrawals">
-          <AdminWithdrawals />
+          {/* AdminWithdrawals component */}
         </TabsContent>
         <TabsContent value="reports">
-          <AdminReports />
+          {/* AdminReports component */}
         </TabsContent>
       </Tabs>
     </div>

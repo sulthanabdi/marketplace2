@@ -19,7 +19,14 @@ interface Chat {
   unread_count: number;
 }
 
-type MessageWithRelations = Database['public']['Tables']['messages']['Row'] & {
+type MessageWithRelations = {
+  id: string;
+  product_id: string;
+  message: string;
+  created_at: string;
+  sender_id: string;
+  receiver_id: string;
+  is_read: boolean;
   products: {
     title: string;
     image_url: string;
