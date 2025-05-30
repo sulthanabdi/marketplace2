@@ -64,10 +64,7 @@ export default function Notification() {
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="font-semibold text-gray-800">{notif.title}</p>
-                  {notif.body && (
-                    <p className="text-sm text-gray-600 mt-1">{notif.body}</p>
-                  )}
+                  <p className="font-semibold text-gray-800">{notif.message}</p>
                 </div>
                 <button
                   onClick={() => removeNotification(notif.id)}
