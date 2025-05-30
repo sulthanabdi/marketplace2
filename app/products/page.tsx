@@ -8,6 +8,7 @@ import ProductFilter, { FilterState } from '@/app/components/ProductFilter';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 type ProductWithSeller = Database['public']['Tables']['products']['Row'] & {
   category?: string;
@@ -22,18 +23,11 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const supabase = createClientComponentClient<Database>();
+  const router = useRouter();
 
   useEffect(() => {
-    checkSession();
-  }, []);
-
-  const checkSession = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      redirect('/login');
-    }
     fetchProducts();
-  };
+  }, []);
 
   const fetchProducts = async (filters?: FilterState) => {
     try {
