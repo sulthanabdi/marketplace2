@@ -10,7 +10,9 @@ import { Database } from '@/types/supabase';
 export default function ProfilePage() {
   const [name, setName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
-  const [location, setLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
+  const [bio, setBio] = useState('');
+  const [faculty, setFaculty] = useState('');
+  const [studentId, setStudentId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,11 +41,15 @@ export default function ProfilePage() {
         if (isValidProfile(profile)) {
           setName(profile.name || '');
           setWhatsapp(profile.whatsapp || '');
-          setLocation(null);
+          setBio(profile.bio || '');
+          setFaculty(profile.faculty || '');
+          setStudentId(profile.student_id || '');
         } else {
           setName('');
           setWhatsapp('');
-          setLocation(null);
+          setBio('');
+          setFaculty('');
+          setStudentId('');
         }
       } catch (error) {
         console.error('Error loading profile:', error);
@@ -71,7 +77,9 @@ export default function ProfilePage() {
         .update({
           name,
           whatsapp,
-          location
+          bio,
+          faculty,
+          student_id: studentId
         })
         .eq('id', user.id);
 
@@ -115,7 +123,7 @@ export default function ProfilePage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Name
+                Full Name
               </label>
               <input
                 type="text"
@@ -143,17 +151,45 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                COD Meeting Point
+              <label htmlFor="studentId" className="block text-sm font-medium text-gray-700">
+                Student ID
               </label>
-              <div className="h-64 rounded-lg overflow-hidden border border-gray-300">
-                {/* MapComponent removed */}
-              </div>
-              {location?.address && (
-                <p className="mt-2 text-sm text-gray-600">
-                  Selected location: {location.address}
-                </p>
-              )}
+              <input
+                type="text"
+                id="studentId"
+                value={studentId}
+                onChange={(e) => setStudentId(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                placeholder="Enter your student ID"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="faculty" className="block text-sm font-medium text-gray-700">
+                Faculty
+              </label>
+              <input
+                type="text"
+                id="faculty"
+                value={faculty}
+                onChange={(e) => setFaculty(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                placeholder="Enter your faculty"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="bio" className="block text-sm font-medium text-gray-700">
+                Bio
+              </label>
+              <textarea
+                id="bio"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                rows={4}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                placeholder="Tell us about yourself"
+              />
             </div>
 
             <div>
@@ -172,6 +208,15 @@ export default function ProfilePage() {
   );
 }
 
-function isValidProfile(profile: any): profile is { name: string; whatsapp: string; location: string | null } {
-  return profile && typeof profile === 'object' && typeof profile.name === 'string' && typeof profile.whatsapp === 'string';
+function isValidProfile(profile: any): profile is { 
+  name: string; 
+  whatsapp: string; 
+  bio?: string;
+  faculty?: string;
+  student_id?: string;
+} {
+  return profile && 
+    typeof profile === 'object' && 
+    typeof profile.name === 'string' && 
+    typeof profile.whatsapp === 'string';
 } 

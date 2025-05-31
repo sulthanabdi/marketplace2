@@ -2,6 +2,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import midtransClient from 'midtrans-client';
 
 export async function POST(request: Request) {
   try {
@@ -47,24 +48,80 @@ export async function POST(request: Request) {
 
     console.log('Transaction updated successfully');
 
-    // If payment success, update product status
+    // If payment success, update product status and process seller payment
     if (transaction_status === 'capture' || transaction_status === 'settlement') {
-      console.log('Payment successful, updating product status');
+      console.log('Payment successful, updating product status and processing seller payment');
       const { data: transaction, error: trxError } = await supabase
         .from('transactions')
-        .select('product_id, buyer_id, seller_id')
+        .select(`
+          product_id, 
+          buyer_id, 
+          seller_id,
+          amount,
+          products (
+            seller_name,
+            seller_email,
+            seller_phone
+          )
+        `)
         .eq('order_id', order_id)
         .single();
       
       console.log('Transaction data:', { transaction, error: trxError });
 
       if (transaction) {
+        // Update product status
         const { error: productError } = await supabase
           .from('products')
           .update({ is_sold: true })
           .eq('id', transaction.product_id);
         
         console.log('Product update result:', { error: productError });
+
+        // Process seller payment through Midtrans
+        try {
+          const snap = new midtransClient.Snap({
+            isProduction: false,
+            serverKey: process.env.MIDTRANS_SERVER_KEY,
+            clientKey: process.env.MIDTRANS_CLIENT_KEY
+          });
+
+          // Calculate seller amount (after platform fee)
+          const platformFee = 0.05; // 5% platform fee
+          const sellerAmount = transaction.amount * (1 - platformFee);
+
+          // Create transfer to seller
+          const transferResponse = await snap.createTransfer({
+            sender_bank: "bca", // Your platform's bank
+            account_number: transaction.products.seller_phone, // Seller's bank account
+            account_holder: transaction.products.seller_name,
+            amount: sellerAmount,
+            transfer_type: "bank_transfer"
+          });
+
+          console.log('Transfer to seller result:', transferResponse);
+
+          // Update transaction with transfer details
+          await supabase
+            .from('transactions')
+            .update({ 
+              seller_payment_status: 'processed',
+              seller_payment_amount: sellerAmount,
+              seller_payment_details: transferResponse
+            })
+            .eq('order_id', order_id);
+
+        } catch (transferError) {
+          console.error('Error processing seller payment:', transferError);
+          // Update transaction with error status
+          await supabase
+            .from('transactions')
+            .update({ 
+              seller_payment_status: 'failed',
+              seller_payment_error: transferError.message
+            })
+            .eq('order_id', order_id);
+        }
 
         // Insert notification for buyer
         const { error: notifErrorBuyer } = await supabase.from('notifications').insert({
@@ -80,7 +137,7 @@ export async function POST(request: Request) {
           user_id: transaction.seller_id,
           type: 'transaction',
           title: 'Produk Terjual',
-          body: 'Produk Anda telah terjual dan pembayaran sudah diterima.',
+          body: 'Produk Anda telah terjual dan pembayaran akan diproses dalam 1x24 jam.',
         });
         console.log('Seller notification result:', { error: notifErrorSeller });
       } else {

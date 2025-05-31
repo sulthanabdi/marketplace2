@@ -36,6 +36,7 @@ function ProductContent({ productId }: { productId: string }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const supabase = createClientComponentClient<Database>();
   const { isInWishlist } = useWishlist();
 
@@ -43,37 +44,37 @@ function ProductContent({ productId }: { productId: string }) {
     const fetchProduct = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (user) {
+          setIsAuthenticated(true);
+        }
 
         const { data: productData, error: productError } = await supabase
-    .from('products')
-    .select(`
-      id,
-      title,
-      description,
-      price,
-      image_url,
-      condition,
-      user_id,
-      is_sold,
-      created_at,
-      seller:users (
-        name,
-        whatsapp
-      )
-    `)
+          .from('products')
+          .select(`
+            id,
+            title,
+            description,
+            price,
+            image_url,
+            condition,
+            user_id,
+            is_sold,
+            created_at,
+            seller:users (
+              name,
+              whatsapp
+            )
+          `)
           .eq('id', productId)
-    .single();
+          .single();
 
-  if (productError) {
-    console.error('Error fetching product:', productError);
+        if (productError) {
+          console.error('Error fetching product:', productError);
           return;
-  }
+        }
 
         if (productData) {
-          // First cast to unknown to avoid type checking
           const unknownData = productData as unknown;
-          // Then cast to our expected type
           const typedProduct = unknownData as ProductWithSeller;
           
           const formattedProduct: Product = {
@@ -92,15 +93,15 @@ function ProductContent({ productId }: { productId: string }) {
               : typedProduct.seller.whatsapp.startsWith('0')
                 ? '+62' + typedProduct.seller.whatsapp.slice(1)
                 : '+62' + typedProduct.seller.whatsapp
-  };
+          };
           setProduct(formattedProduct);
-          setIsOwner(user.id === typedProduct.user_id);
+          setIsOwner(user?.id === typedProduct.user_id);
         }
       } catch (error) {
         console.error('Error:', error);
       } finally {
         setIsLoading(false);
-  }
+      }
     };
 
     fetchProduct();
@@ -140,7 +141,7 @@ function ProductContent({ productId }: { productId: string }) {
                 src={product.image_url}
                 alt={product.title}
                 fill
-                sizes="(max-width: 768px) 100vw, 50vw"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-cover rounded-lg"
                 priority
               />
@@ -177,12 +178,22 @@ function ProductContent({ productId }: { productId: string }) {
                   sellerId={product.user_id}
                   userId={product.user_id}
                 />
-                {!isOwner && !product.is_sold && (
+                {!isOwner && !product.is_sold && isAuthenticated && (
                   <div className="mt-6">
                     <PaymentButton 
                       productId={product.id}
                       amount={product.price}
                     />
+                  </div>
+                )}
+                {!isOwner && !product.is_sold && !isAuthenticated && (
+                  <div className="mt-6">
+                    <Link
+                      href="/login"
+                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 text-center block"
+                    >
+                      Login to Purchase
+                    </Link>
                   </div>
                 )}
               </div>

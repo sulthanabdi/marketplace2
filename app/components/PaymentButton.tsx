@@ -43,6 +43,7 @@ export default function PaymentButton({ productId, amount }: PaymentButtonProps)
 
     try {
       setIsLoading(true);
+      console.log('Sending payment request with productId:', productId);
       const response = await fetch('/api/create-transaction', {
         method: 'POST',
         headers: {
@@ -53,6 +54,7 @@ export default function PaymentButton({ productId, amount }: PaymentButtonProps)
 
       if (!response.ok) {
         const error = await response.json();
+        console.error('Payment API error:', error);
         throw new Error(error.error || 'Failed to process payment');
       }
 

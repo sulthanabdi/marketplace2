@@ -29,6 +29,16 @@ export default function ProductsPage() {
     fetchProducts();
   }, []);
 
+  const handleUploadClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    router.push('/upload');
+  };
+
   const fetchProducts = async (filters?: FilterState) => {
     try {
       setLoading(true);
@@ -148,12 +158,12 @@ export default function ProductsPage() {
         >
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-            <Link
-              href="/upload"
+            <button
+              onClick={handleUploadClick}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
             >
               Upload Product
-            </Link>
+            </button>
           </div>
           
           <div className="bg-white rounded-lg shadow-sm p-6 mb-8">

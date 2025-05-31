@@ -1,6 +1,8 @@
 'use client';
 
 import { useWishlist } from '@/app/context/WishlistContext';
+import { useRouter } from 'next/navigation';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 type Props = {
   productId: string;
@@ -10,8 +12,15 @@ type Props = {
 export default function WishlistButton({ productId, isWishlisted: initialIsWishlisted }: Props) {
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const isWishlisted = isInWishlist(productId);
+  const router = useRouter();
+  const supabase = createClientComponentClient();
 
   const toggleWishlist = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push('/login');
+      return;
+    }
     if (isWishlisted) {
       await removeFromWishlist(productId);
     } else {

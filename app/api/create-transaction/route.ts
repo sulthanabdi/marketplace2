@@ -6,6 +6,25 @@ import { NextResponse } from 'next/server';
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  // Handle CORS preflight request
+  if (request.method === 'OPTIONS') {
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+    });
+  }
+
+  // Add CORS headers to the response
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  };
+
   try {
     console.log('Starting transaction creation...');
     
@@ -16,9 +35,19 @@ export async function POST(request: Request) {
     }
     
     const supabase = createRouteHandlerClient({ cookies });
-    const { productId } = await request.json();
+    const body = await request.json();
+    const { productId } = body;
     
+    console.log('Received request body:', body);
     console.log('Product ID:', productId);
+
+    if (!productId) {
+      console.error('Product ID is required');
+      return NextResponse.json(
+        { error: 'Product ID is required' },
+        { status: 400, headers }
+      );
+    }
 
     // Get user session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -39,6 +68,7 @@ export async function POST(request: Request) {
     });
 
     // Get product details
+    console.log('Fetching product with ID:', productId);
     const { data: product, error: productError } = await supabase
       .from('products')
       .select(`
@@ -50,26 +80,46 @@ export async function POST(request: Request) {
         condition,
         user_id,
         is_sold,
-        created_at
+        created_at,
+        seller:users (
+          name,
+          whatsapp
+        )
       `)
       .eq('id', productId)
       .single();
 
     if (productError) {
-      console.error('Product error:', productError);
+      console.error('Product error details:', {
+        code: productError.code,
+        message: productError.message,
+        details: productError.details,
+        hint: productError.hint
+      });
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
     if (!product) {
-      console.error('Product not found:', productId);
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      console.error('Product not found in database:', productId);
+      return NextResponse.json(
+        { error: 'Product not found' },
+        { status: 404, headers }
+      );
     }
 
     console.log('Product found:', {
       id: product.id,
       title: product.title,
-      price: product.price
+      price: product.price,
+      seller: product.seller,
+      is_sold: product.is_sold
     });
+
+    // Check if product is already sold
+    if (product.is_sold) {
+      console.error('Product already sold:', productId);
+      return NextResponse.json({ error: 'Product is no longer available' }, { status: 400 });
+    }
 
     // Get user details
     const { data: user, error: userError } = await supabase
@@ -152,7 +202,14 @@ export async function POST(request: Request) {
         price: product.price,
         quantity: 1,
         name: product.title
-      }]
+      }],
+      // Add sub-merchant information
+      sub_merchant: {
+        id: product.user_id, // Seller's sub-merchant ID
+        name: product.seller.name,
+        email: user.email,
+        phone: product.seller.whatsapp
+      }
     };
 
     console.log('Creating transaction with parameters:', parameter);
@@ -212,6 +269,9 @@ export async function POST(request: Request) {
         stack: error.stack
       });
     }
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500, headers }
+    );
   }
 } 

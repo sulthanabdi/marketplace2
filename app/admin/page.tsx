@@ -3,18 +3,11 @@
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Users, Package, Wallet, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Database } from '@/types/supabase';
 
 interface Stats {
   totalUsers: number;
@@ -22,8 +15,6 @@ interface Stats {
   pendingWithdrawals: number;
   pendingReports: number;
 }
-
-type DateRange = 'today' | 'week' | 'month' | 'year' | 'all';
 
 export default function AdminPage() {
   const [stats, setStats] = useState<Stats>({
@@ -34,14 +25,13 @@ export default function AdminPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [dateRange, setDateRange] = useState<DateRange>('all');
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createClientComponentClient<Database>();
 
   useEffect(() => {
     checkAuth();
     loadStats();
-  }, [dateRange]);
+  }, []);
 
   const checkAuth = async () => {
     try {
@@ -66,56 +56,31 @@ export default function AdminPage() {
     }
   };
 
-  const getDateFilter = () => {
-    const now = new Date();
-    switch (dateRange) {
-      case 'today':
-        return now.toISOString().split('T')[0];
-      case 'week':
-        const weekAgo = new Date(now.setDate(now.getDate() - 7));
-        return weekAgo.toISOString().split('T')[0];
-      case 'month':
-        const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
-        return monthAgo.toISOString().split('T')[0];
-      case 'year':
-        const yearAgo = new Date(now.setFullYear(now.getFullYear() - 1));
-        return yearAgo.toISOString().split('T')[0];
-      default:
-        return undefined;
-    }
-  };
-
   const loadStats = async () => {
     try {
       setIsRefreshing(true);
-      const dateFilter = getDateFilter();
-      const dateCondition = dateFilter ? `created_at >= '${dateFilter}'` : undefined;
 
       // Get total users
       const { count: totalUsers } = await supabase
         .from('users')
-        .select('*', { count: 'exact', head: true })
-        .filter(dateCondition || 'id', 'neq', '');
+        .select('*', { count: 'exact', head: true });
 
       // Get total products
       const { count: totalProducts } = await supabase
         .from('products')
-        .select('*', { count: 'exact', head: true })
-        .filter(dateCondition || 'id', 'neq', '');
+        .select('*', { count: 'exact', head: true });
 
       // Get pending withdrawals
       const { count: pendingWithdrawals } = await supabase
         .from('withdrawals')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending')
-        .filter(dateCondition || 'id', 'neq', '');
+        .eq('status', 'pending');
 
       // Get pending reports
       const { count: pendingReports } = await supabase
         .from('reports')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending')
-        .filter(dateCondition || 'id', 'neq', '');
+        .eq('status', 'pending');
 
       setStats({
         totalUsers: totalUsers || 0,
@@ -131,95 +96,32 @@ export default function AdminPage() {
     }
   };
 
-  const StatCard = ({ title, value, icon: Icon }: { title: string; value: number; icon: any }) => (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        {isLoading || isRefreshing ? (
-          <Skeleton className="h-8 w-24" />
-        ) : (
-          <div className="text-2xl font-bold">{value}</div>
-        )}
-      </CardContent>
-    </Card>
+  const StatCard = ({ title, value, icon: Icon, href }: { title: string; value: number; icon: any; href: string }) => (
+    <Link href={href}>
+      <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">{title}</CardTitle>
+          <Icon className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          {isLoading || isRefreshing ? (
+            <div className="h-8 w-24 bg-gray-200 animate-pulse rounded"></div>
+          ) : (
+            <div className="text-2xl font-bold">{value}</div>
+          )}
+        </CardContent>
+      </Card>
+    </Link>
   );
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto py-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <div className="flex items-center gap-4">
-            <Select value={dateRange} onValueChange={(value: DateRange) => setDateRange(value)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select date range" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Time</SelectItem>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="week">Last 7 Days</SelectItem>
-                <SelectItem value="month">Last 30 Days</SelectItem>
-                <SelectItem value="year">Last Year</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="sm" disabled>
-              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-              Refresh Stats
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Total Users" value={0} icon={Users} />
-          <StatCard title="Total Products" value={0} icon={Package} />
-          <StatCard title="Pending Withdrawals" value={0} icon={Wallet} />
-          <StatCard title="Pending Reports" value={0} icon={AlertTriangle} />
-        </div>
-
-        <Tabs defaultValue="users" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="products">Products</TabsTrigger>
-            <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
-          </TabsList>
-          <TabsContent value="users">
-            {/* AdminUsers component */}
-          </TabsContent>
-          <TabsContent value="products">
-            {/* AdminProducts component */}
-          </TabsContent>
-          <TabsContent value="withdrawals">
-            {/* AdminWithdrawals component */}
-          </TabsContent>
-          <TabsContent value="reports">
-            {/* AdminReports component */}
-          </TabsContent>
-        </Tabs>
-      </div>
-    );
-  }
-
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <div className="flex items-center gap-4">
-          <Select value={dateRange} onValueChange={(value: DateRange) => setDateRange(value)}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select date range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Time</SelectItem>
-              <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="week">Last 7 Days</SelectItem>
-              <SelectItem value="month">Last 30 Days</SelectItem>
-              <SelectItem value="year">Last Year</SelectItem>
-            </SelectContent>
-          </Select>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            <p className="mt-2 text-gray-600">Manage your marketplace</p>
+          </div>
           <Button
             variant="outline"
             size="sm"
@@ -230,35 +132,79 @@ export default function AdminPage() {
             Refresh Stats
           </Button>
         </div>
-      </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Users" value={stats.totalUsers} icon={Users} />
-        <StatCard title="Total Products" value={stats.totalProducts} icon={Package} />
-        <StatCard title="Pending Withdrawals" value={stats.pendingWithdrawals} icon={Wallet} />
-        <StatCard title="Pending Reports" value={stats.pendingReports} icon={AlertTriangle} />
-      </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+          <StatCard
+            title="Total Users"
+            value={stats.totalUsers}
+            icon={Users}
+            href="/admin/users"
+          />
+          <StatCard
+            title="Total Products"
+            value={stats.totalProducts}
+            icon={Package}
+            href="/admin/products"
+          />
+          <StatCard
+            title="Pending Withdrawals"
+            value={stats.pendingWithdrawals}
+            icon={Wallet}
+            href="/admin/withdrawals"
+          />
+          <StatCard
+            title="Pending Reports"
+            value={stats.pendingReports}
+            icon={AlertTriangle}
+            href="/admin/reports"
+          />
+        </div>
 
-      <Tabs defaultValue="users" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="products">Products</TabsTrigger>
-          <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
-        </TabsList>
-        <TabsContent value="users">
-          {/* AdminUsers component */}
-        </TabsContent>
-        <TabsContent value="products">
-          {/* AdminProducts component */}
-        </TabsContent>
-        <TabsContent value="withdrawals">
-          {/* AdminWithdrawals component */}
-        </TabsContent>
-        <TabsContent value="reports">
-          {/* AdminReports component */}
-        </TabsContent>
-      </Tabs>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4">
+                <Link href="/admin/users">
+                  <Button variant="outline" className="w-full justify-start">
+                    <Users className="mr-2 h-4 w-4" />
+                    Manage Users
+                  </Button>
+                </Link>
+                <Link href="/admin/products">
+                  <Button variant="outline" className="w-full justify-start">
+                    <Package className="mr-2 h-4 w-4" />
+                    Manage Products
+                  </Button>
+                </Link>
+                <Link href="/admin/withdrawals">
+                  <Button variant="outline" className="w-full justify-start">
+                    <Wallet className="mr-2 h-4 w-4" />
+                    Process Withdrawals
+                  </Button>
+                </Link>
+                <Link href="/admin/reports">
+                  <Button variant="outline" className="w-full justify-start">
+                    <AlertTriangle className="mr-2 h-4 w-4" />
+                    Handle Reports
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-500">Coming soon...</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 } 
