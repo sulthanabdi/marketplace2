@@ -4,6 +4,12 @@ const XENDIT_API_KEY_DISBURSE = process.env.XENDIT_API_KEY_DISBURSE || '';
 const XENDIT_API_KEY_EWALLET = process.env.XENDIT_API_KEY_EWALLET || '';
 const XENDIT_API_BASE_URL = 'https://api.xendit.co/disbursements';
 
+function toE164(phone: string): string {
+  if (phone.startsWith('0')) return '+62' + phone.slice(1);
+  if (phone.startsWith('+')) return phone;
+  return phone;
+}
+
 export async function createXenditDisbursement({
   amount,
   bank_code,
@@ -71,8 +77,9 @@ export async function createXenditEwalletDisbursement({
       currency: 'IDR',
       amount,
       ewallet_type,
+      checkout_method: 'ONE_TIME_PAYMENT',
       channel_properties: {
-        mobile_number,
+        mobile_number: toE164(mobile_number),
         success_redirect_url,
       },
     }),
