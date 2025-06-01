@@ -250,6 +250,9 @@ export default function DashboardPage() {
   const activeProducts = products?.filter(p => !p.is_sold).length || 0;
   const soldProducts = products?.filter(p => p.is_sold).length || 0;
 
+  // Hitung balance
+  const balance = (sales?.reduce((acc, sale) => acc + (sale.amount || 0), 0) || 0) - totalWithdrawn;
+
     return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -667,7 +670,7 @@ export default function DashboardPage() {
 
                     <button
                       type="submit"
-                      disabled={!withdrawalAmount || !withdrawalMethod || !withdrawalAccount || !withdrawalName}
+                      disabled={!withdrawalAmount || !withdrawalMethod || !withdrawalAccount || !withdrawalName || balance < 0}
                       className="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Request Withdrawal
