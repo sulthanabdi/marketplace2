@@ -101,16 +101,25 @@ export default function ProfilePage() {
     const bank = SUPPORTED_BANKS.find(b => b.code === code);
     if (!bank) return false;
 
+    // Remove any non-digit characters
     const cleanNumber = number.replace(/\D/g, '');
-    
-    if (cleanNumber.length !== bank.accountLength) {
-      setBankError(`${bank.type === 'ewallet' ? 'Phone number' : 'Account number'} must be ${bank.accountLength} digits for ${bank.name}`);
-      return false;
-    }
 
-    if (!/^\d+$/.test(cleanNumber)) {
-      setBankError(`${bank.type === 'ewallet' ? 'Phone number' : 'Account number'} must contain only digits`);
-      return false;
+    if (bank.type === 'ewallet') {
+      // E-wallet: nomor HP Indonesia, 10-13 digit, mulai 08
+      if (!/^08\d{8,11}$/.test(cleanNumber)) {
+        setBankError('Phone number must be 10-13 digits and start with 08');
+        return false;
+      }
+    } else {
+      // Bank: cek panjang sesuai bank
+      if (cleanNumber.length !== bank.accountLength) {
+        setBankError(`Account number must be ${bank.accountLength} digits for ${bank.name}`);
+        return false;
+      }
+      if (!/^\d+$/.test(cleanNumber)) {
+        setBankError('Account number must contain only digits');
+        return false;
+      }
     }
 
     setBankError(null);

@@ -82,37 +82,39 @@ export async function POST(request: Request) {
           // Ambil data seller dari tabel users
           const { data: sellerUser, error: sellerUserError } = await supabase
             .from('users')
-            .select('name, bank_code, bank_account_number')
+            .select('name, bank_code, bank_account_number, bank_account_name')
             .eq('id', transaction.seller_id)
             .single();
 
-          let sellerBankCode = 'BCA';
-          let sellerAccountNumber = null;
-          let sellerAccountName = null;
-          if (sellerUser) {
-            sellerBankCode = sellerUser.bank_code || 'BCA';
-            sellerAccountNumber = sellerUser.bank_account_number || null;
-            sellerAccountName = sellerUser.name || null;
+          if (sellerUserError) {
+            console.error('Error fetching seller data:', sellerUserError);
+            throw new Error('Gagal mengambil data penjual');
           }
 
-          // Fallback: jika tidak ada di users, ambil dari produk (jika ada)
-          if (!sellerAccountNumber && transaction.products && transaction.products.seller_phone) {
-            sellerAccountNumber = transaction.products.seller_phone;
-          }
-          if (!sellerAccountName && transaction.products && transaction.products.seller_name) {
-            sellerAccountName = transaction.products.seller_name;
+          if (!sellerUser) {
+            console.error('Seller data not found');
+            throw new Error('Data penjual tidak ditemukan');
           }
 
-          if (!sellerAccountNumber || !sellerAccountName) {
-            throw new Error('Data rekening penjual tidak lengkap');
+          // Validasi data rekening penjual
+          if (!sellerUser.bank_code) {
+            throw new Error('Kode bank penjual tidak ditemukan');
+          }
+
+          if (!sellerUser.bank_account_number) {
+            throw new Error('Nomor rekening penjual tidak ditemukan');
+          }
+
+          if (!sellerUser.bank_account_name) {
+            throw new Error('Nama pemilik rekening penjual tidak ditemukan');
           }
 
           // Create disbursement to seller via Xendit
           const disbursement = await createXenditDisbursement({
             amount: sellerAmount,
-            bank_code: sellerBankCode,
-            account_number: sellerAccountNumber,
-            account_holder_name: sellerAccountName,
+            bank_code: sellerUser.bank_code,
+            account_number: sellerUser.bank_account_number,
+            account_holder_name: sellerUser.bank_account_name,
             remark: `Payment for order ${transaction.order_id}`
           });
 
