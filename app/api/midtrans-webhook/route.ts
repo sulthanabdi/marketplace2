@@ -36,6 +36,16 @@ export async function POST(request: Request) {
     // If payment success, update product status and process seller payment
     if (status === 'success') {
       console.log('Payment successful, updating product status and processing seller payment');
+      // Debug: Query tanpa join ke products
+      console.log('Mencari transaksi dengan order_id:', order_id);
+      const { data: transactionNoJoin, error: trxErrorNoJoin } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('order_id', order_id)
+        .single();
+      console.log('Hasil query transaksi tanpa join:', { transactionNoJoin, error: trxErrorNoJoin });
+
+      // Query dengan join ke products
       const { data: transaction, error: trxError } = await supabase
         .from('transactions')
         .select(`
@@ -51,8 +61,7 @@ export async function POST(request: Request) {
         `)
         .eq('order_id', order_id)
         .single();
-      
-      console.log('Transaction data:', { transaction, error: trxError });
+      console.log('Hasil query transaksi dengan join:', { transaction, error: trxError });
 
       if (transaction) {
         // Update product status
