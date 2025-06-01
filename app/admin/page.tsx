@@ -99,22 +99,22 @@ export default function AdminPage() {
   const StatCard = ({ title, value, icon: Icon, href }: { title: string; value: number; icon: any; href: string }) => (
     <Link href={href}>
       <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{title}</CardTitle>
-          <Icon className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          {isLoading || isRefreshing ? (
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <Icon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        {isLoading || isRefreshing ? (
             <div className="h-8 w-24 bg-gray-200 animate-pulse rounded"></div>
-          ) : (
-            <div className="text-2xl font-bold">{value}</div>
-          )}
-        </CardContent>
-      </Card>
+        ) : (
+          <div className="text-2xl font-bold">{value}</div>
+        )}
+      </CardContent>
+    </Card>
     </Link>
   );
 
-  return (
+    return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex items-center justify-between mb-8">
@@ -158,7 +158,7 @@ export default function AdminPage() {
             icon={AlertTriangle}
             href="/admin/reports"
           />
-        </div>
+      </div>
 
         <div className="grid gap-6 md:grid-cols-2">
           <Card>

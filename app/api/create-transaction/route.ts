@@ -1,7 +1,8 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import midtransClient from 'midtrans-client';
+import { createFlipPayment } from '@/lib/flip';
 import { NextResponse } from 'next/server';
+import midtransClient from 'midtrans-client';
 
 export const dynamic = "force-dynamic";
 
@@ -27,12 +28,6 @@ export async function POST(request: Request) {
 
   try {
     console.log('Starting transaction creation...');
-    
-    // Validate Midtrans environment variables
-    if (!process.env.MIDTRANS_SERVER_KEY || !process.env.MIDTRANS_CLIENT_KEY) {
-      console.error('Midtrans environment variables not set');
-      return NextResponse.json({ error: 'Payment system configuration error' }, { status: 500 });
-    }
     
     const supabase = createRouteHandlerClient({ cookies });
     const body = await request.json();
@@ -144,19 +139,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Create Snap instance
-    const snap = new midtransClient.Snap({
-      isProduction: false,
-      serverKey: process.env.MIDTRANS_SERVER_KEY,
-      clientKey: process.env.MIDTRANS_CLIENT_KEY
-    });
-
-    console.log('Midtrans config:', {
-      isProduction: false,
-      serverKey: process.env.MIDTRANS_SERVER_KEY ? 'Set' : 'Not set',
-      clientKey: process.env.MIDTRANS_CLIENT_KEY ? 'Set' : 'Not set'
-    });
-
     // Cek transaksi pending untuk produk dan user ini
     const { data: existingPending, error: pendingError } = await supabase
       .from('transactions')
@@ -176,45 +158,45 @@ export async function POST(request: Request) {
 
     if (existingPending) {
       // Sudah ada transaksi pending, kembalikan Snap token lama jika ada
-      if (existingPending.snap_token) {
+      if (existingPending.flip_bill_link_id) {
         return NextResponse.json({
-          token: existingPending.snap_token,
-          redirect_url: existingPending.snap_redirect_url || null
+          bill_link_id: existingPending.flip_bill_link_id,
+          qr_string: existingPending.flip_qr_string
         });
       } else {
-        // Snap token belum ada, lanjut proses seperti biasa (fallback)
+        // Flip payment details belum ada, lanjut proses seperti biasa (fallback)
       }
     }
 
     // Create transaction parameters
+    const orderId = `ORDER-${Date.now()}`;
+    // Setup Midtrans Snap
+    const snap = new midtransClient.Snap({
+      isProduction: false,
+      serverKey: process.env.MIDTRANS_SERVER_KEY,
+      clientKey: process.env.MIDTRANS_CLIENT_KEY,
+    });
     const parameter = {
       transaction_details: {
-        order_id: `ORDER-${Date.now()}`,
-        gross_amount: product.price
+        order_id: orderId,
+        gross_amount: product.price,
       },
+      item_details: [
+        {
+          id: product.id,
+          price: product.price,
+          quantity: 1,
+          name: product.title,
+        },
+      ],
       customer_details: {
         first_name: user.name,
         email: user.email,
-        phone: user.phone || ''
+        phone: user.whatsapp || user.phone || '',
       },
-      item_details: [{
-        id: product.id,
-        price: product.price,
-        quantity: 1,
-        name: product.title
-      }],
-      // Add sub-merchant information
-      sub_merchant: {
-        id: product.user_id, // Seller's sub-merchant ID
-        name: product.seller.name,
-        email: user.email,
-        phone: product.seller.whatsapp
-      }
     };
-
-    console.log('Creating transaction with parameters:', parameter);
-
-    // Create transaction record in database
+    const snapResponse = await snap.createTransaction(parameter);
+    // Simpan transaksi ke database
     const { data: transaction, error: transactionError } = await supabase
       .from('transactions')
       .insert([{
@@ -223,44 +205,17 @@ export async function POST(request: Request) {
         seller_id: product.user_id,
         amount: product.price,
         status: 'pending',
-        order_id: parameter.transaction_details.order_id
+        order_id: orderId,
+        midtrans_token: snapResponse.token,
+        midtrans_redirect_url: snapResponse.redirect_url,
       }])
       .select()
       .single();
-
     if (transactionError) {
       console.error('Transaction error:', transactionError);
       return NextResponse.json({ error: 'Failed to create transaction' }, { status: 500 });
     }
-
-    console.log('Transaction created:', transaction);
-
-    try {
-    // Get Snap token
-    const transactionToken = await snap.createTransaction(parameter);
-
-      console.log('Snap token received:', {
-        token: transactionToken.token,
-        redirect_url: transactionToken.redirect_url
-      });
-
-    // Simpan snap_token dan snap_redirect_url ke transaksi
-    await supabase
-      .from('transactions')
-      .update({
-        snap_token: transactionToken.token,
-        snap_redirect_url: transactionToken.redirect_url
-      })
-      .eq('order_id', parameter.transaction_details.order_id);
-
-    return NextResponse.json({
-      token: transactionToken.token,
-      redirect_url: transactionToken.redirect_url
-    });
-    } catch (midtransError) {
-      console.error('Midtrans error:', midtransError);
-      return NextResponse.json({ error: 'Failed to create payment' }, { status: 500 });
-    }
+    return NextResponse.json({ snap_token: snapResponse.token });
   } catch (error) {
     console.error('Transaction error:', error);
     if (error instanceof Error) {

@@ -6,11 +6,13 @@ import { Database } from '@/types/supabase';
 import Image from 'next/image';
 import Link from 'next/link';
 
-interface Transaction {
+type Transaction = {
   id: string;
   order_id: string;
-  status: string;
   amount: number;
+  status: string;
+  payment_method: string;
+  payment_details: any;
   created_at: string;
   product: {
     id: string;
@@ -23,10 +25,25 @@ interface Transaction {
     };
   };
   buyer: {
+    id: string;
     name: string;
     email: string;
   };
-}
+  seller: {
+    id: string;
+    email: string;
+  };
+  seller_payment_status: 'pending' | 'processed' | 'failed';
+  seller_payment_amount?: number;
+  seller_payment_details?: {
+    id: string;
+    status: string;
+    created_at: string;
+  };
+  seller_payment_error?: string;
+  flip_bill_link_id?: string;
+  flip_qr_string?: string;
+};
 
 async function getTransaction(orderId: string): Promise<Transaction | null> {
   const supabase = createServerComponentClient<Database>({ cookies });
@@ -116,7 +133,12 @@ export default async function TransactionPage({ params }: { params: { orderId: s
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-gray-500">Status</dt>
-                    <dd className="mt-1 text-sm text-gray-900 capitalize">{transaction.status}</dd>
+                    <dd className="mt-1 text-sm text-gray-900 capitalize">
+                      {transaction.status === 'success' ? 'Success' : 
+                       transaction.status === 'pending' ? 'Pending' : 
+                       transaction.status === 'failed' ? 'Failed' : 
+                       transaction.status}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-gray-500">Amount</dt>
@@ -143,6 +165,40 @@ export default async function TransactionPage({ params }: { params: { orderId: s
                 <h2 className="text-lg font-medium text-gray-900 mb-2">Buyer</h2>
                 <p className="text-sm text-gray-900">{transaction.buyer.name}</p>
                 <p className="text-sm text-gray-500">{transaction.buyer.email}</p>
+              </div>
+
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Payment Details</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  {transaction.flip_bill_link_id ? (
+                    <div>
+                      <p>Bill Link ID: {transaction.flip_bill_link_id}</p>
+                      {transaction.flip_qr_string && (
+                        <img src={`data:image/png;base64,${transaction.flip_qr_string}`} alt="Payment QR Code" />
+                      )}
+                    </div>
+                  ) : 'N/A'}
+                </dd>
+              </div>
+
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Seller Payment</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  {transaction.seller_payment_status === 'processed' ? (
+                    <div>
+                      <p>Status: Processed</p>
+                      <p>Amount: Rp {transaction.seller_payment_amount?.toLocaleString('id-ID')}</p>
+                      <p>Disbursement ID: {transaction.seller_payment_details?.id}</p>
+                    </div>
+                  ) : 
+                   transaction.seller_payment_status === 'failed' ? (
+                    <div>
+                      <p>Status: Failed</p>
+                      <p>Error: {transaction.seller_payment_error}</p>
+                    </div>
+                  ) : 
+                   'Pending'}
+                </dd>
               </div>
             </div>
 

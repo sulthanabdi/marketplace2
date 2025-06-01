@@ -11,7 +11,16 @@ import { useWishlist } from '@/app/context/WishlistContext';
 import { WishlistProvider } from '@/app/context/WishlistContext';
 import { useEffect, useState } from 'react';
 
-type ProductWithSeller = Database['public']['Tables']['products']['Row'] & {
+type ProductWithSeller = {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  image_url: string;
+  condition: string;
+  user_id: string;
+  is_sold: boolean;
+  created_at: string;
   seller: {
     name: string;
     whatsapp: string;
@@ -49,29 +58,29 @@ function ProductContent({ productId }: { productId: string }) {
         }
 
         const { data: productData, error: productError } = await supabase
-          .from('products')
-          .select(`
-            id,
-            title,
-            description,
-            price,
-            image_url,
-            condition,
-            user_id,
-            is_sold,
-            created_at,
-            seller:users (
-              name,
-              whatsapp
-            )
-          `)
+    .from('products')
+    .select(`
+      id,
+      title,
+      description,
+      price,
+      image_url,
+      condition,
+      user_id,
+      is_sold,
+      created_at,
+      seller:users (
+        name,
+        whatsapp
+      )
+    `)
           .eq('id', productId)
-          .single();
+    .single();
 
-        if (productError) {
-          console.error('Error fetching product:', productError);
+  if (productError) {
+    console.error('Error fetching product:', productError);
           return;
-        }
+  }
 
         if (productData) {
           const unknownData = productData as unknown;
@@ -93,7 +102,7 @@ function ProductContent({ productId }: { productId: string }) {
               : typedProduct.seller.whatsapp.startsWith('0')
                 ? '+62' + typedProduct.seller.whatsapp.slice(1)
                 : '+62' + typedProduct.seller.whatsapp
-          };
+  };
           setProduct(formattedProduct);
           setIsOwner(user?.id === typedProduct.user_id);
         }
@@ -101,7 +110,7 @@ function ProductContent({ productId }: { productId: string }) {
         console.error('Error:', error);
       } finally {
         setIsLoading(false);
-      }
+  }
     };
 
     fetchProduct();

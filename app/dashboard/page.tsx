@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlusCircle, Package, ShoppingCart, MessageSquare, TrendingUp, DollarSign, Users } from 'lucide-react';
 import { Database } from '@/types/supabase';
+import { createFlipDisbursement } from '@/lib/flip';
 
 interface Withdrawal {
   id: string;
@@ -19,6 +20,19 @@ interface Withdrawal {
   withdrawal_account: string;
   withdrawal_name: string;
   created_at: string;
+  flip_disbursement_id?: string;
+  disbursement_status?: string;
+  disbursement_response?: any;
+  processed_at?: string;
+}
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  withdrawal_method?: string;
+  withdrawal_account?: string;
+  withdrawal_name?: string;
 }
 
 export default function DashboardPage() {
@@ -30,7 +44,7 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [totalWithdrawn, setTotalWithdrawn] = useState(0);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [purchases, setPurchases] = useState<any[]>([]);
   const [sales, setSales] = useState<any[]>([]);
@@ -103,6 +117,7 @@ export default function DashboardPage() {
       )
     `)
         .eq('seller_id', user.id)
+        .in('status', ['settlement', 'completed'])
         .order('created_at', { ascending: false });
 
       if (Array.isArray(salesData)) {
@@ -112,7 +127,7 @@ export default function DashboardPage() {
       // Fetch withdrawal history
       const { data: withdrawalHistory } = await supabase
         .from('withdrawals')
-        .select('*')
+        .select('*, flip_disbursement_id')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -153,7 +168,7 @@ export default function DashboardPage() {
       return;
     }
 
-    const totalSales = sales?.reduce((acc, sale) => acc + sale.amount, 0) || 0;
+    const totalSales = sales?.reduce((acc, sale) => acc + (sale.amount || 0), 0) || 0;
     if (amount > (totalSales - totalWithdrawn)) {
       setError('Withdrawal amount cannot exceed your balance');
       return;
@@ -165,67 +180,25 @@ export default function DashboardPage() {
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
+      // Call backend API to process withdrawal
+      const response = await fetch('/api/withdraw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount,
+          method: withdrawalMethod,
+          account: withdrawalAccount,
+          name: withdrawalName,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        setError(result.error || 'Failed to process withdrawal request');
         return;
       }
-
-      // Create withdrawal request
-      const { error: withdrawalError } = await supabase
-        .from('withdrawals')
-        .insert([
-          {
-            user_id: user.id,
-            amount,
-            status: 'pending',
-            withdrawal_method: withdrawalMethod,
-            withdrawal_account: withdrawalAccount,
-            withdrawal_name: withdrawalName
-          }
-        ]);
-
-      if (withdrawalError) throw withdrawalError;
-
-      // Update user's withdrawal details
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          withdrawal_method: withdrawalMethod,
-          withdrawal_account: withdrawalAccount,
-          withdrawal_name: withdrawalName
-        })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      setSuccess('Withdrawal request submitted successfully');
+      setSuccess('Withdrawal processed successfully');
       setWithdrawalAmount('');
-      
-      // Refresh withdrawal data
-      const { data: newWithdrawals } = await supabase
-        .from('withdrawals')
-        .select('*')
-        .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
-
-      const validNewWithdrawals = Array.isArray(newWithdrawals)
-        ? newWithdrawals.filter(w => typeof w === 'object' && w !== null && 'id' in w && 'status' in w)
-        : [];
-      setWithdrawals(validNewWithdrawals);
-
-      // Update total withdrawn amount
-      const { data: completedWithdrawals } = await supabase
-        .from('withdrawals')
-        .select('amount')
-        .eq('user_id', user.id)
-        .eq('status', 'completed');
-
-      const total = Array.isArray(completedWithdrawals)
-        ? completedWithdrawals.filter(w => typeof w === 'object' && w !== null && 'amount' in w)
-            .reduce((sum, w) => sum + w.amount, 0)
-        : 0;
-      setTotalWithdrawn(total);
+      fetchData(); // Refresh data
     } catch (error) {
       console.error('Error processing withdrawal:', error);
       setError('Failed to process withdrawal request');
@@ -233,7 +206,7 @@ export default function DashboardPage() {
   };
 
   // Calculate statistics
-  const totalSales = sales?.reduce((acc, sale) => acc + sale.amount, 0) || 0;
+  const totalSales = sales?.reduce((acc, sale) => acc + (sale.amount || 0), 0) || 0;
   const totalPurchases = purchases?.reduce((acc, purchase) => acc + purchase.amount, 0) || 0;
   const activeProducts = products?.filter(p => !p.is_sold).length || 0;
   const soldProducts = products?.filter(p => p.is_sold).length || 0;
@@ -465,7 +438,7 @@ export default function DashboardPage() {
                         </CardDescription>
                               <div className="mt-2">
                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  purchase.status === 'completed' 
+                                  purchase.status === 'success' 
                                     ? 'bg-green-100 text-green-800'
                                     : purchase.status === 'pending'
                                     ? 'bg-yellow-100 text-yellow-800'
@@ -577,9 +550,14 @@ export default function DashboardPage() {
                           className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                           required
                         >
-                          <option value="">Select method</option>
-                          <option value="bank_transfer">Bank Transfer</option>
-                          <option value="e_wallet">E-Wallet</option>
+                          <option value="">Select bank</option>
+                          <option value="bca">BCA</option>
+                          <option value="mandiri">Mandiri</option>
+                          <option value="bni">BNI</option>
+                          <option value="bri">BRI</option>
+                          <option value="gopay">GoPay</option>
+                          <option value="ovo">OVO</option>
+                          <option value="dana">DANA</option>
                         </select>
                       </div>
                     </div>
@@ -676,9 +654,9 @@ export default function DashboardPage() {
                               className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 withdrawal.status === 'completed'
                                   ? 'bg-green-100 text-green-800'
-                                  : withdrawal.status === 'rejected'
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-yellow-100 text-yellow-800'
+                                  : withdrawal.status === 'pending'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-red-100 text-red-800'
                               }`}
                             >
                               {withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1)}

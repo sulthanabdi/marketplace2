@@ -5,26 +5,23 @@ import { createFlipDisbursement } from '@/lib/flip';
 
 export async function POST(request: Request) {
   try {
-    console.log('Webhook received:', new Date().toISOString());
+    console.log('Flip webhook received:', new Date().toISOString());
     const supabase = createRouteHandlerClient({ cookies });
     const body = await request.json();
     
     console.log('Webhook payload:', JSON.stringify(body, null, 2));
     
-    // Ambil order_id dan status dari Midtrans
-    const { order_id, transaction_status } = body;
-    let status = 'pending';
-    if (transaction_status === 'settlement') status = 'success';
-    else if (transaction_status === 'expire' || transaction_status === 'cancel') status = 'failed';
+    const { bill_link_id, status } = body;
+    console.log('Processing Flip webhook:', { bill_link_id, status });
 
-    // Update transaction status berdasarkan order_id
+    // Update transaction status
     const { error: updateError } = await supabase
       .from('transactions')
       .update({ 
-        status,
+        status: status,
         payment_details: body
       })
-      .eq('order_id', order_id);
+      .eq('flip_bill_link_id', bill_link_id);
 
     if (updateError) {
       console.error('Error updating transaction:', updateError);
@@ -49,7 +46,7 @@ export async function POST(request: Request) {
             seller_phone
           )
         `)
-        .eq('order_id', order_id)
+        .eq('flip_bill_link_id', bill_link_id)
         .single();
       
       console.log('Transaction data:', { transaction, error: trxError });
@@ -88,7 +85,7 @@ export async function POST(request: Request) {
               seller_payment_amount: sellerAmount,
               seller_payment_details: disbursement
             })
-            .eq('order_id', order_id);
+            .eq('flip_bill_link_id', bill_link_id);
 
         } catch (disbursementError: any) {
           console.error('Error processing seller payment:', disbursementError);
@@ -99,7 +96,7 @@ export async function POST(request: Request) {
               seller_payment_status: 'failed',
               seller_payment_error: disbursementError.message
             })
-            .eq('order_id', order_id);
+            .eq('flip_bill_link_id', bill_link_id);
         }
 
         // Insert notification for buyer
@@ -120,7 +117,7 @@ export async function POST(request: Request) {
         });
         console.log('Seller notification result:', { error: notifErrorSeller });
       } else {
-        console.error('No transaction found for order_id:', order_id);
+        console.error('No transaction found for bill_link_id:', bill_link_id);
       }
     }
 

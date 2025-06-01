@@ -1,14 +1,7 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import midtransClient from 'midtrans-client';
-
-// Create Snap API instance
-const snap = new midtransClient.Snap({
-  isProduction: false,
-  serverKey: process.env.MIDTRANS_SERVER_KEY,
-  clientKey: process.env.MIDTRANS_CLIENT_KEY,
-});
+import { createFlipDisbursement } from '@/lib/flip';
 
 export async function POST(request: Request) {
   try {
@@ -39,30 +32,21 @@ export async function POST(request: Request) {
     // Get withdrawal details from request
     const { withdrawalId, amount, method, account, name } = await request.json();
 
-    // Process withdrawal with Midtrans
-    const parameter = {
-      transaction_details: {
-        order_id: `WD-${withdrawalId}`,
-        gross_amount: amount
-      },
-      customer_details: {
-        first_name: name,
-        email: user.email
-      },
-      bank_transfer: {
-        bank: method === 'bank_transfer' ? 'bca' : 'gopay',
-        va_number: account
-      }
-    };
-
-    const transaction = await snap.createTransaction(parameter);
+    // Process withdrawal with Flip disbursement
+    const disbursement = await createFlipDisbursement({
+      amount,
+      bank_code: method === 'bank_transfer' ? 'bca' : 'gopay',
+      account_number: account,
+      account_holder_name: name,
+      remark: `Withdrawal for ${name}`
+    });
 
     // Update withdrawal status in database
     const { error: updateError } = await supabase
       .from('withdrawals')
       .update({
         status: 'completed',
-        midtrans_transaction_id: transaction.transaction_id
+        flip_disbursement_id: disbursement.id
       })
       .eq('id', withdrawalId);
 
@@ -72,7 +56,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      transaction_id: transaction.transaction_id
+      disbursement_id: disbursement.id
     });
   } catch (error) {
     console.error('Error processing withdrawal:', error);

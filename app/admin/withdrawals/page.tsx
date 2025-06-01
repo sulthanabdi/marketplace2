@@ -95,8 +95,14 @@ export default function AdminWithdrawalsPage() {
       setError('');
       setSuccess('');
 
-      // Call server action instead of fetch
-      await processWithdrawalAction(withdrawal.id);
+      // Call server action with full withdrawal object for Flip payout
+      await processWithdrawalAction({
+        id: withdrawal.id,
+        amount: withdrawal.amount,
+        withdrawal_method: withdrawal.withdrawal_method,
+        withdrawal_account: withdrawal.withdrawal_account,
+        withdrawal_name: withdrawal.withdrawal_name,
+      });
 
       setSuccess('Withdrawal processed successfully');
       fetchWithdrawals(); // Refresh the list
