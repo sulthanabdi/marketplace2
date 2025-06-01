@@ -16,6 +16,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // Normalize method to lowercase
+    const normalizedMethod = typeof method === 'string' ? method.toLowerCase() : '';
+    console.log('Withdrawal request:', { amount, method: normalizedMethod, account, name });
+
     // Create withdrawal record
     const { data: withdrawal, error: withdrawalError } = await supabase
       .from('withdrawals')
@@ -24,7 +28,7 @@ export async function POST(request: Request) {
           user_id: user.id,
           amount,
           status: 'pending',
-          withdrawal_method: method,
+          withdrawal_method: normalizedMethod,
           withdrawal_account: account,
           withdrawal_name: name
         }
@@ -33,6 +37,7 @@ export async function POST(request: Request) {
       .single();
 
     if (withdrawalError) {
+      console.error('Withdrawal insert error:', withdrawalError);
       return NextResponse.json({ error: withdrawalError.message }, { status: 500 });
     }
 
@@ -41,12 +46,14 @@ export async function POST(request: Request) {
     try {
       flipResult = await createFlipDisbursement({
         amount,
-        bank_code: method,
+        bank_code: normalizedMethod,
         account_number: account,
         account_holder_name: name,
         remark: `Withdrawal for ${withdrawal.id}`,
       });
+      console.log('Flip API response:', flipResult);
     } catch (flipError: any) {
+      console.error('Flip API error:', flipError);
       // Update withdrawal status to rejected
       await supabase
         .from('withdrawals')
@@ -73,6 +80,7 @@ export async function POST(request: Request) {
       .eq('id', withdrawal.id);
 
     if (updateError) {
+      console.error('Withdrawal update error:', updateError);
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 

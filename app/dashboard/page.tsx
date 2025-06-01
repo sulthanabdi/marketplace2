@@ -42,6 +42,7 @@ export default function DashboardPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [purchases, setPurchases] = useState<any[]>([]);
   const [sales, setSales] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClientComponentClient<Database>();
 
@@ -160,32 +161,53 @@ export default function DashboardPage() {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setLoading(true);
 
     const amount = parseInt(withdrawalAmount);
     if (isNaN(amount) || amount <= 0) {
       setError('Please enter a valid amount');
+      setLoading(false);
       return;
     }
 
     const totalSales = sales?.reduce((acc, sale) => acc + (sale.amount || 0), 0) || 0;
     if (amount > (totalSales - totalWithdrawn)) {
       setError('Withdrawal amount cannot exceed your balance');
+      setLoading(false);
       return;
     }
 
     if (!withdrawalMethod || !withdrawalAccount || !withdrawalName) {
       setError('Please fill in all withdrawal details');
+      setLoading(false);
       return;
     }
 
+    // Validate withdrawal method
+    const validMethods = ['bca', 'mandiri', 'bni', 'bri', 'gopay', 'ovo', 'dana'];
+    const normalizedMethod = withdrawalMethod.toLowerCase();
+    if (!validMethods.includes(normalizedMethod)) {
+      setError('Invalid withdrawal method');
+      setLoading(false);
+      return;
+    }
+
+    // Validate account number for e-wallets
+    if (['gopay', 'ovo', 'dana'].includes(normalizedMethod)) {
+      if (!/^\d{10,15}$/.test(withdrawalAccount)) {
+        setError('Account number for e-wallet must be a valid phone number (10-15 digits)');
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
-      // Call backend API to process withdrawal
       const response = await fetch('/api/withdraw', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount,
-          method: withdrawalMethod,
+          method: normalizedMethod,
           account: withdrawalAccount,
           name: withdrawalName,
         }),
@@ -193,6 +215,7 @@ export default function DashboardPage() {
       const result = await response.json();
       if (!response.ok) {
         setError(result.error || 'Failed to process withdrawal request');
+        setLoading(false);
         return;
       }
       setSuccess('Withdrawal processed successfully');
@@ -201,6 +224,8 @@ export default function DashboardPage() {
     } catch (error) {
       console.error('Error processing withdrawal:', error);
       setError('Failed to process withdrawal request');
+    } finally {
+      setLoading(false);
     }
   };
 
