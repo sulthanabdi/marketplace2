@@ -119,7 +119,7 @@ export default function DashboardPage() {
       )
     `)
         .eq('seller_id', user.id)
-        .in('status', ['settlement', 'completed'])
+        .in('status', ['settlement', 'completed', 'success'])
         .order('created_at', { ascending: false });
 
       if (Array.isArray(salesData)) {
