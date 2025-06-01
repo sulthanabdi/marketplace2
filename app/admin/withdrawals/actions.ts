@@ -29,35 +29,35 @@ export async function processWithdrawalAction(withdrawal: {
   if (!isAdmin) throw new Error('Forbidden');
 
   try {
-    // Panggil API Flip
-    const flipResult = await createFlipDisbursement({
-      amount: withdrawal.amount,
+  // Panggil API Flip
+  const flipResult = await createFlipDisbursement({
+    amount: withdrawal.amount,
       bank_code: withdrawal.withdrawal_method,
-      account_number: withdrawal.withdrawal_account,
-      account_holder_name: withdrawal.withdrawal_name,
-      remark: `Withdrawal for ${withdrawal.id}`,
-    });
+    account_number: withdrawal.withdrawal_account,
+    account_holder_name: withdrawal.withdrawal_name,
+    remark: `Withdrawal for ${withdrawal.id}`,
+  });
 
     console.log('Flip disbursement result:', flipResult);
 
-    // Simpan response Flip ke database
+  // Simpan response Flip ke database
     const { error: updateError } = await supabase
-      .from('withdrawals')
-      .update({
+    .from('withdrawals')
+    .update({
         status: flipResult.status === 'SUCCESS' ? 'completed' : 'rejected',
-        flip_disbursement_id: flipResult.id,
-        disbursement_status: flipResult.status,
+      flip_disbursement_id: flipResult.id,
+      disbursement_status: flipResult.status,
         disbursement_response: flipResult,
         processed_at: new Date().toISOString()
-      })
-      .eq('id', withdrawal.id);
+    })
+    .eq('id', withdrawal.id);
 
     if (updateError) {
       console.error('Error updating withdrawal:', updateError);
       throw new Error('Failed to update withdrawal status');
     }
 
-    return flipResult;
+  return flipResult;
   } catch (error) {
     console.error('Error processing withdrawal:', error);
     

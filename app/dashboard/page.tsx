@@ -20,6 +20,8 @@ type User = SupabaseUser & {
   bank_account_name?: string | null;
 };
 
+const IS_TESTING = process.env.NEXT_PUBLIC_IS_TESTING === 'true';
+
 interface Withdrawal {
   id: string;
   amount: number;
@@ -32,6 +34,16 @@ interface Withdrawal {
   disbursement_status?: string;
   disbursement_response?: any;
   processed_at?: string;
+}
+
+function isWithdrawal(w: any): w is Withdrawal {
+  return (
+    w &&
+    typeof w === 'object' &&
+    typeof w.status === 'string' &&
+    typeof w.amount === 'number' &&
+    (w.status === 'completed' || (IS_TESTING && w.status === 'pending'))
+  );
 }
 
 export default function DashboardPage() {
@@ -140,17 +152,14 @@ export default function DashboardPage() {
         : [];
       setWithdrawals(validWithdrawals);
 
-      // Calculate total withdrawn amount
-      const { data: completedWithdrawals } = await supabase
+      // Untuk testing: jika IS_TESTING, kurangi juga withdrawal pending
+      const { data: allWithdrawals } = await supabase
         .from('withdrawals')
-        .select('amount')
-        .eq('user_id', user.id)
-        .eq('status', 'completed');
+        .select('amount, status')
+        .eq('user_id', user.id);
 
-      const total = Array.isArray(completedWithdrawals)
-        ? completedWithdrawals
-            .filter(w => typeof w === 'object' && w !== null && !('error' in w))
-            .map(w => w as unknown as { amount: number })
+      const total = Array.isArray(allWithdrawals)
+        ? (allWithdrawals.filter(isWithdrawal) as unknown as Withdrawal[])
             .reduce((sum, w) => sum + w.amount, 0)
         : 0;
       setTotalWithdrawn(total);
