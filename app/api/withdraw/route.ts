@@ -1,7 +1,7 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { createFlipDisbursement } from '@/lib/flip';
+import { createXenditDisbursement } from '@/lib/xendit';
 
 export async function POST(request: Request) {
   try {
@@ -41,40 +41,40 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: withdrawalError.message }, { status: 500 });
     }
 
-    // Process withdrawal with Flip
-    let flipResult;
+    // Process withdrawal with Xendit
+    let xenditResult;
     try {
-      flipResult = await createFlipDisbursement({
+      xenditResult = await createXenditDisbursement({
         amount,
         bank_code: normalizedMethod,
         account_number: account,
         account_holder_name: name,
         remark: `Withdrawal for ${withdrawal.id}`,
       });
-      console.log('Flip API response:', flipResult);
-    } catch (flipError: any) {
-      console.error('Flip API error:', flipError);
+      console.log('Xendit API response:', xenditResult);
+    } catch (xenditError: any) {
+      console.error('Xendit API error:', xenditError);
       // Update withdrawal status to rejected
       await supabase
         .from('withdrawals')
         .update({
           status: 'rejected',
           disbursement_status: 'ERROR',
-          disbursement_response: { error: flipError.message },
+          disbursement_response: { error: xenditError.message },
           processed_at: new Date().toISOString()
         })
         .eq('id', withdrawal.id);
-      return NextResponse.json({ error: flipError.message }, { status: 500 });
+      return NextResponse.json({ error: xenditError.message }, { status: 500 });
     }
 
     // Update withdrawal status
     const { error: updateError } = await supabase
       .from('withdrawals')
       .update({
-        status: flipResult.status === 'SUCCESS' ? 'completed' : 'rejected',
-        flip_disbursement_id: flipResult.id,
-        disbursement_status: flipResult.status,
-        disbursement_response: flipResult,
+        status: xenditResult.status === 'COMPLETED' ? 'completed' : 'pending',
+        xendit_disbursement_id: xenditResult.id,
+        disbursement_status: xenditResult.status,
+        disbursement_response: xenditResult,
         processed_at: new Date().toISOString()
       })
       .eq('id', withdrawal.id);
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, withdrawal_id: withdrawal.id, flip: flipResult });
+    return NextResponse.json({ success: true, withdrawal_id: withdrawal.id, xendit: xenditResult });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to process withdrawal' }, { status: 500 });
   }

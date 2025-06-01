@@ -1,3 +1,4 @@
+// WARNING: File ini sudah tidak digunakan. Semua logic withdrawal sudah migrasi ke Xendit. Jangan gunakan lagi untuk withdrawal baru.
 const FLIP_API_KEY = process.env.FLIP_API_KEY_SANDBOX || "";
 const FLIP_API_BASE_URL = process.env.FLIP_API_BASE_URL_SANDBOX || "https://sandbox.flip.id/api/v2";
 const FLIP_AUTH_HEADER = `Basic ${Buffer.from(FLIP_API_KEY + ":").toString("base64")}`;

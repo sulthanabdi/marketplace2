@@ -5,125 +5,47 @@ import { createFlipDisbursement } from '@/lib/flip';
 
 export async function POST(request: Request) {
   try {
-    console.log('Flip webhook received:', new Date().toISOString());
     const supabase = createRouteHandlerClient({ cookies });
     const body = await request.json();
-    
-    console.log('Webhook payload:', JSON.stringify(body, null, 2));
-    
-    const { bill_link_id, status } = body;
-    console.log('Processing Flip webhook:', { bill_link_id, status });
+    const webhookToken = request.headers.get('x-callback-token');
+    const expectedToken = process.env.XENDIT_WEBHOOK_TOKEN;
 
-    // Update transaction status
+    // Verifikasi token webhook
+    if (!webhookToken || webhookToken !== expectedToken) {
+      console.error('Invalid Xendit webhook token');
+      return NextResponse.json({ error: 'Invalid token' }, { status: 403 });
+    }
+
+    console.log('Xendit webhook received:', new Date().toISOString());
+    console.log('Webhook payload:', JSON.stringify(body, null, 2));
+
+    // Xendit payload: id, status, external_id, etc
+    const { id, status, external_id } = body;
+    if (!id || !external_id) {
+      return NextResponse.json({ error: 'Missing id or external_id' }, { status: 400 });
+    }
+
+    // Update withdrawal status in Supabase
     const { error: updateError } = await supabase
-      .from('transactions')
-      .update({ 
-        status: status,
-        payment_details: body
+      .from('withdrawals')
+      .update({
+        status: status === 'COMPLETED' ? 'completed' : status === 'FAILED' ? 'rejected' : 'pending',
+        disbursement_status: status,
+        disbursement_response: body,
+        processed_at: new Date().toISOString(),
+        xendit_disbursement_id: id,
       })
-      .eq('flip_bill_link_id', bill_link_id);
+      .eq('xendit_disbursement_id', id);
 
     if (updateError) {
-      console.error('Error updating transaction:', updateError);
-      return NextResponse.json({ error: 'Failed to update transaction' }, { status: 500 });
+      console.error('Error updating withdrawal:', updateError);
+      return NextResponse.json({ error: 'Failed to update withdrawal' }, { status: 500 });
     }
 
-    console.log('Transaction updated successfully');
-
-    // If payment success, update product status and process seller payment
-    if (status === 'success') {
-      console.log('Payment successful, updating product status and processing seller payment');
-      const { data: transaction, error: trxError } = await supabase
-        .from('transactions')
-        .select(`
-          product_id, 
-          buyer_id, 
-          seller_id,
-          amount,
-          products (
-            seller_name,
-            seller_email,
-            seller_phone
-          )
-        `)
-        .eq('flip_bill_link_id', bill_link_id)
-        .single();
-      
-      console.log('Transaction data:', { transaction, error: trxError });
-
-      if (transaction) {
-        // Update product status
-        const { error: productError } = await supabase
-          .from('products')
-          .update({ is_sold: true })
-          .eq('id', transaction.product_id);
-        
-        console.log('Product update result:', { error: productError });
-
-        // Process seller payment through Flip disbursement
-        try {
-          // Calculate seller amount (after platform fee)
-          const platformFee = 0.05; // 5% platform fee
-          const sellerAmount = transaction.amount * (1 - platformFee);
-
-          // Create disbursement to seller
-          const disbursement = await createFlipDisbursement({
-            amount: sellerAmount,
-            bank_code: 'bca', // Assuming seller's bank is BCA
-            account_number: transaction.products.seller_phone,
-            account_holder_name: transaction.products.seller_name,
-            remark: `Payment for order ${transaction.order_id}`
-          });
-
-          console.log('Disbursement to seller result:', disbursement);
-
-          // Update transaction with disbursement details
-          await supabase
-            .from('transactions')
-            .update({ 
-              seller_payment_status: 'processed',
-              seller_payment_amount: sellerAmount,
-              seller_payment_details: disbursement
-            })
-            .eq('flip_bill_link_id', bill_link_id);
-
-        } catch (disbursementError: any) {
-          console.error('Error processing seller payment:', disbursementError);
-          // Update transaction with error status
-          await supabase
-            .from('transactions')
-            .update({ 
-              seller_payment_status: 'failed',
-              seller_payment_error: disbursementError.message
-            })
-            .eq('flip_bill_link_id', bill_link_id);
-        }
-
-        // Insert notification for buyer
-        const { error: notifErrorBuyer } = await supabase.from('notifications').insert({
-          user_id: transaction.buyer_id,
-          type: 'transaction',
-          title: 'Pembayaran Berhasil',
-          body: 'Transaksi Anda telah berhasil dan produk siap diambil.',
-        });
-        console.log('Buyer notification result:', { error: notifErrorBuyer });
-
-        // Insert notification for seller
-        const { error: notifErrorSeller } = await supabase.from('notifications').insert({
-          user_id: transaction.seller_id,
-          type: 'transaction',
-          title: 'Produk Terjual',
-          body: 'Produk Anda telah terjual dan pembayaran akan diproses dalam 1x24 jam.',
-        });
-        console.log('Seller notification result:', { error: notifErrorSeller });
-      } else {
-        console.error('No transaction found for bill_link_id:', bill_link_id);
-      }
-    }
-
+    console.log('Withdrawal updated successfully for disbursement_id:', id);
     return NextResponse.json({ status: 'success' });
   } catch (error) {
-    console.error('Webhook error:', error);
+    console.error('Xendit webhook error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 
