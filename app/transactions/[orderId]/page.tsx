@@ -39,6 +39,11 @@ type Transaction = {
     id: string;
     status: string;
     created_at: string;
+    bank_code?: string;
+    ewallet_type?: string;
+    account_number?: string;
+    mobile_number?: string;
+    [key: string]: any;
   };
   seller_payment_error?: string;
   flip_bill_link_id?: string;
@@ -189,30 +194,21 @@ export default async function TransactionPage({ params }: { params: { orderId: s
                     <div className="flex flex-col gap-1">
                       <span className="inline-block px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-xs font-semibold w-max mb-1">Success</span>
                       <p>Amount: <span className="font-medium">Rp {transaction.seller_payment_amount?.toLocaleString('id-ID')}</span></p>
-                      {transaction.seller_payment_details ? (
-                        <div className="text-xs text-gray-700 mt-1">
-                          {('bank_code' in transaction.seller_payment_details && transaction.seller_payment_details.bank_code)
-                            ? (<div>Bank: {transaction.seller_payment_details.bank_code}</div>)
-                            : null}
-                          {('ewallet_type' in transaction.seller_payment_details && transaction.seller_payment_details.ewallet_type)
-                            ? (<div>E-Wallet: {transaction.seller_payment_details.ewallet_type}</div>)
-                            : null}
-                          {('account_number' in transaction.seller_payment_details && transaction.seller_payment_details.account_number)
-                            ? (<div>Account: {transaction.seller_payment_details.account_number}</div>)
-                            : null}
-                          {('mobile_number' in transaction.seller_payment_details && transaction.seller_payment_details.mobile_number)
-                            ? (<div>Phone: {transaction.seller_payment_details.mobile_number}</div>)
-                            : null}
-                          {transaction.seller_payment_details.id && (
-                            <div>Disbursement ID: {transaction.seller_payment_details.id}</div>
-                          )}
-                          {transaction.seller_payment_details.created_at && (
-                            <div>Date: {new Date(transaction.seller_payment_details.created_at).toLocaleString('id-ID')}</div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-xs text-gray-500">Payout processed, details unavailable.</div>
-                      )}
+                      {(() => {
+                        const details = transaction.seller_payment_details;
+                        const hasDetails = details && Object.keys(details).length > 0;
+                        if (!hasDetails) return <div className="text-xs text-gray-500">Payout processed, details unavailable.</div>;
+                        return (
+                          <div className="text-xs text-gray-700 mt-1">
+                            {details.bank_code && <div>Bank: {details.bank_code}</div>}
+                            {details.ewallet_type && <div>E-Wallet: {details.ewallet_type}</div>}
+                            {details.account_number && <div>Account: {details.account_number}</div>}
+                            {details.mobile_number && <div>Phone: {details.mobile_number}</div>}
+                            {details.id && <div>Disbursement ID: {details.id}</div>}
+                            {details.created_at && <div>Date: {new Date(details.created_at).toLocaleString('id-ID')}</div>}
+                          </div>
+                        );
+                      })()}
                     </div>
                   ) : transaction.seller_payment_status === 'failed' ? (
                     <div className="flex flex-col gap-1">
