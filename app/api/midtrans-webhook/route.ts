@@ -45,7 +45,7 @@ export async function POST(request: Request) {
         .single();
       console.log('Hasil query transaksi tanpa join:', { transactionNoJoin, error: trxErrorNoJoin });
 
-      // Query dengan join ke products
+      // Query dengan join ke products (hanya kolom yang ada)
       const { data: transaction, error: trxError } = await supabase
         .from('transactions')
         .select(`
@@ -54,9 +54,10 @@ export async function POST(request: Request) {
           seller_id,
           amount,
           products (
-            seller_name,
-            seller_email,
-            seller_phone
+            title,
+            price,
+            image_url,
+            condition
           )
         `)
         .eq('order_id', order_id)
