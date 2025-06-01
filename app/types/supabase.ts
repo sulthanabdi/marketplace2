@@ -48,19 +48,43 @@ export interface Database {
         Row: {
           id: string
           name: string
-          whatsapp: string
+          email: string
+          whatsapp: string | null
+          role: 'user' | 'admin'
+          bank_code: string | null
+          bank_account_number: string | null
+          bank_account_name: string | null
+          withdrawal_method: string | null
+          withdrawal_account: string | null
+          withdrawal_name: string | null
           created_at: string
         }
         Insert: {
           id: string
           name: string
-          whatsapp: string
+          email: string
+          whatsapp?: string | null
+          role?: 'user' | 'admin'
+          bank_code?: string | null
+          bank_account_number?: string | null
+          bank_account_name?: string | null
+          withdrawal_method?: string | null
+          withdrawal_account?: string | null
+          withdrawal_name?: string | null
           created_at?: string
         }
         Update: {
           id?: string
           name?: string
-          whatsapp?: string
+          email?: string
+          whatsapp?: string | null
+          role?: 'user' | 'admin'
+          bank_code?: string | null
+          bank_account_number?: string | null
+          bank_account_name?: string | null
+          withdrawal_method?: string | null
+          withdrawal_account?: string | null
+          withdrawal_name?: string | null
           created_at?: string
         }
       }
@@ -157,7 +181,21 @@ export type Product = Database['public']['Tables']['products']['Row'] & {
   } | null;
 };
 
-export type User = Database['public']['Tables']['users']['Row'];
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  whatsapp: string | null;
+  role: 'user' | 'admin';
+  bank_code: string | null;
+  bank_account_number: string | null;
+  bank_account_name: string | null;
+  withdrawal_method: string | null;
+  withdrawal_account: string | null;
+  withdrawal_name: string | null;
+  created_at: string;
+};
+
 export type Wishlist = Database['public']['Tables']['wishlists']['Row'];
 export type Notification = Database['public']['Tables']['notifications']['Row'];
 export type Message = Database['public']['Tables']['messages']['Row']; 

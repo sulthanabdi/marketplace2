@@ -22,7 +22,7 @@ const supabase = createClient<Database>(
 
 export async function POST(request: Request) {
   try {
-    const { id, name, email, whatsapp } = await request.json();
+    const { id, name, email, whatsapp, bank_code, bank_account_number, bank_account_name } = await request.json();
 
     if (!id || !name || !email || !whatsapp) {
       return NextResponse.json(
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('Creating user profile:', { id, name, email, whatsapp });
+    console.log('Creating user profile:', { id, name, email, whatsapp, bank_code, bank_account_number, bank_account_name });
 
     const { error } = await supabase
       .from('users')
@@ -41,6 +41,9 @@ export async function POST(request: Request) {
           name,
           email,
           whatsapp,
+          bank_code,
+          bank_account_number,
+          bank_account_name,
         },
       ]);
 

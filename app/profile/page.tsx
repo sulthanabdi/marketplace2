@@ -6,6 +6,30 @@ import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
 import { Database } from '@/types/supabase';
+import { CreditCard, Smartphone, HelpCircle, AlertCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+type BankType = 'bank' | 'ewallet';
+
+interface Bank {
+  code: string;
+  name: string;
+  accountLength: number;
+  type: BankType;
+  icon: string;
+}
+
+// List of supported banks and e-wallets with icons
+const SUPPORTED_BANKS: Bank[] = [
+  { code: 'BCA', name: 'Bank Central Asia', accountLength: 10, type: 'bank', icon: '🏦' },
+  { code: 'BNI', name: 'Bank Negara Indonesia', accountLength: 10, type: 'bank', icon: '🏦' },
+  { code: 'BRI', name: 'Bank Rakyat Indonesia', accountLength: 15, type: 'bank', icon: '🏦' },
+  { code: 'MANDIRI', name: 'Bank Mandiri', accountLength: 13, type: 'bank', icon: '🏦' },
+  { code: 'BSI', name: 'Bank Syariah Indonesia', accountLength: 10, type: 'bank', icon: '🏦' },
+  { code: 'GOPAY', name: 'GoPay', accountLength: 10, type: 'ewallet', icon: '🟢' },
+  { code: 'OVO', name: 'OVO', accountLength: 10, type: 'ewallet', icon: '🟣' },
+  { code: 'DANA', name: 'DANA', accountLength: 10, type: 'ewallet', icon: '🔵' },
+];
 
 export default function ProfilePage() {
   const [name, setName] = useState('');
@@ -13,10 +37,15 @@ export default function ProfilePage() {
   const [bio, setBio] = useState('');
   const [faculty, setFaculty] = useState('');
   const [studentId, setStudentId] = useState('');
+  const [bankCode, setBankCode] = useState('');
+  const [bankAccountNumber, setBankAccountNumber] = useState('');
+  const [bankAccountName, setBankAccountName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [bankError, setBankError] = useState<string | null>(null);
+  const [accountType, setAccountType] = useState<BankType>('bank');
 
   const router = useRouter();
   const supabase = createClientComponentClient<Database>();
@@ -44,12 +73,18 @@ export default function ProfilePage() {
           setBio(profile.bio || '');
           setFaculty(profile.faculty || '');
           setStudentId(profile.student_id || '');
+          setBankCode(profile.bank_code || '');
+          setBankAccountNumber(profile.bank_account_number || '');
+          setBankAccountName(profile.bank_account_name || '');
         } else {
           setName('');
           setWhatsapp('');
           setBio('');
           setFaculty('');
           setStudentId('');
+          setBankCode('');
+          setBankAccountNumber('');
+          setBankAccountName('');
         }
       } catch (error) {
         console.error('Error loading profile:', error);
@@ -62,11 +97,37 @@ export default function ProfilePage() {
     loadProfile();
   }, [supabase, router]);
 
+  const validateBankAccount = (code: string, number: string): boolean => {
+    const bank = SUPPORTED_BANKS.find(b => b.code === code);
+    if (!bank) return false;
+
+    const cleanNumber = number.replace(/\D/g, '');
+    
+    if (cleanNumber.length !== bank.accountLength) {
+      setBankError(`${bank.type === 'ewallet' ? 'Phone number' : 'Account number'} must be ${bank.accountLength} digits for ${bank.name}`);
+      return false;
+    }
+
+    if (!/^\d+$/.test(cleanNumber)) {
+      setBankError(`${bank.type === 'ewallet' ? 'Phone number' : 'Account number'} must contain only digits`);
+      return false;
+    }
+
+    setBankError(null);
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     setError(null);
     setSuccess(null);
+    setBankError(null);
+
+    if (bankCode && !validateBankAccount(bankCode, bankAccountNumber)) {
+      setIsSaving(false);
+      return;
+    }
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -79,7 +140,10 @@ export default function ProfilePage() {
           whatsapp,
           bio,
           faculty,
-          student_id: studentId
+          student_id: studentId,
+          bank_code: bankCode,
+          bank_account_number: bankAccountNumber.replace(/\D/g, ''),
+          bank_account_name: bankAccountName
         })
         .eq('id', user.id);
 
@@ -94,6 +158,26 @@ export default function ProfilePage() {
     }
   };
 
+  const handleBankAccountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '');
+    setBankAccountNumber(value);
+    if (bankCode) {
+      validateBankAccount(bankCode, value);
+    }
+  };
+
+  const handleBankCodeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setBankCode(value);
+    const selectedBank = SUPPORTED_BANKS.find(b => b.code === value);
+    if (selectedBank) {
+      setAccountType(selectedBank.type as BankType);
+    }
+    if (value && bankAccountNumber) {
+      validateBankAccount(value, bankAccountNumber);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -105,7 +189,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-sm p-8">
+        <div className="bg-white rounded-lg shadow px-6 py-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-8">Edit Profile</h1>
           
           {error && (
@@ -192,11 +276,138 @@ export default function ProfilePage() {
               />
             </div>
 
-            <div>
+            {/* Bank Account Information */}
+            <div className="border-t pt-6 mt-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">Payment Information</h2>
+              <p className="text-sm text-gray-500 mb-4">
+                This information is required for receiving payments from sales.
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="bankCode" className="block text-sm font-medium text-gray-700">
+                    Payment Method
+                  </label>
+                  <select
+                    id="bankCode"
+                    value={bankCode}
+                    onChange={handleBankCodeChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                    required
+                  >
+                    <option value="">Select payment method</option>
+                    <optgroup label="Bank Transfer">
+                      {SUPPORTED_BANKS.filter(b => b.type === 'bank').map((bank) => (
+                        <option key={bank.code} value={bank.code}>
+                          {bank.icon} {bank.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="E-Wallet">
+                      {SUPPORTED_BANKS.filter(b => b.type === 'ewallet').map((bank) => (
+                        <option key={bank.code} value={bank.code}>
+                          {bank.icon} {bank.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="bankAccountNumber" className="block text-sm font-medium text-gray-700">
+                      {accountType === 'ewallet' ? 'Phone Number' : 'Account Number'}
+                    </label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <HelpCircle className="h-4 w-4 text-gray-400" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-sm">
+                            {accountType === 'ewallet' 
+                              ? 'Enter your phone number registered with the e-wallet'
+                              : 'Enter your bank account number'}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="mt-1 relative">
+                    <input
+                      type="text"
+                      id="bankAccountNumber"
+                      value={bankAccountNumber}
+                      onChange={handleBankAccountChange}
+                      className={`block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm ${
+                        bankError ? 'border-red-500' : ''
+                      }`}
+                      placeholder={accountType === 'ewallet' ? 'Enter your phone number' : 'Enter your account number'}
+                      required
+                    />
+                    {bankCode && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {accountType === 'ewallet' ? (
+                          <Smartphone className="h-4 w-4 text-gray-400" />
+                        ) : (
+                          <CreditCard className="h-4 w-4 text-gray-400" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {bankError && (
+                    <div className="mt-1 flex items-center gap-1 text-sm text-red-600">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>{bankError}</span>
+                    </div>
+                  )}
+                  {bankCode && !bankError && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      {accountType === 'ewallet' 
+                        ? 'Format: 08xxxxxxxxxx'
+                        : `Format: ${'x'.repeat(SUPPORTED_BANKS.find(b => b.code === bankCode)?.accountLength || 0)}`}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="bankAccountName" className="block text-sm font-medium text-gray-700">
+                      {accountType === 'ewallet' ? 'Account Name' : 'Account Holder Name'}
+                    </label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <HelpCircle className="h-4 w-4 text-gray-400" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-sm">
+                            {accountType === 'ewallet'
+                              ? 'Enter the name registered with your e-wallet account'
+                              : 'Enter the name as it appears on your bank account'}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <input
+                    type="text"
+                    id="bankAccountName"
+                    value={bankAccountName}
+                    onChange={(e) => setBankAccountName(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                    placeholder={accountType === 'ewallet' ? 'Enter your name' : 'Enter the name on your bank account'}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
               <button
                 type="submit"
                 disabled={isSaving}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
               >
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
@@ -214,6 +425,9 @@ function isValidProfile(profile: any): profile is {
   bio?: string;
   faculty?: string;
   student_id?: string;
+  bank_code?: string;
+  bank_account_number?: string;
+  bank_account_name?: string;
 } {
   return profile && 
     typeof profile === 'object' && 

@@ -59,6 +59,9 @@ export async function POST(request: Request) {
         name: session.user.user_metadata.full_name || session.user.email?.split('@')[0] || 'User',
         phone: session.user.user_metadata.phone || '',
         whatsapp: session.user.user_metadata.phone || '',
+        bank_code: session.user.user_metadata.bank_code || null,
+        bank_account_number: session.user.user_metadata.bank_account_number || null,
+        bank_account_name: session.user.user_metadata.bank_account_name || null,
         updated_at: new Date().toISOString()
       })
       .eq('id', session.user.id);

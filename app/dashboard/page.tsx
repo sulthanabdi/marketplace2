@@ -13,7 +13,12 @@ import { Database } from '@/types/supabase';
 import { createFlipDisbursement } from '@/lib/flip';
 import { User as SupabaseUser } from '@/types/supabase';
 
-type User = SupabaseUser & { whatsapp?: string | null };
+type User = SupabaseUser & { 
+  whatsapp?: string | null;
+  bank_code?: string | null;
+  bank_account_number?: string | null;
+  bank_account_name?: string | null;
+};
 
 interface Withdrawal {
   id: string;
@@ -255,6 +260,24 @@ export default function DashboardPage() {
                   <p className="text-gray-600">
                     <span className="font-medium">WhatsApp:</span> {user?.whatsapp || 'Not set'}
                   </p>
+                  {user?.bank_code && (
+                    <div className="mt-4 pt-4 border-t">
+                      <h3 className="font-medium text-gray-900">Payment Information</h3>
+                      <p className="text-gray-600">
+                        <span className="font-medium">Method:</span> {user.bank_code}
+                      </p>
+                      <p className="text-gray-600">
+                        <span className="font-medium">
+                          {user.bank_code === 'GOPAY' || user.bank_code === 'OVO' || user.bank_code === 'DANA' 
+                            ? 'Phone Number' 
+                            : 'Account Number'}:
+                        </span> {user.bank_account_number}
+                      </p>
+                      <p className="text-gray-600">
+                        <span className="font-medium">Name:</span> {user.bank_account_name}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <div className="mt-4">
                   <Link href="/profile">
