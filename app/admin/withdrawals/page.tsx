@@ -52,7 +52,9 @@ export default function AdminWithdrawalsPage() {
 
       let isAdmin = false;
       if (userData && typeof userData === 'object' && 'role' in userData) {
-        isAdmin = userData.role === 'admin';
+        isAdmin = (userData as { role: string }).role === 'admin';
+      } else {
+        isAdmin = false;
       }
       if (!isAdmin) {
         router.push('/');

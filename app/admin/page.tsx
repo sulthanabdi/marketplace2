@@ -47,7 +47,7 @@ export default function AdminPage() {
         .eq('id', user.id)
         .single();
 
-      if (!userData || userData.role !== 'admin') {
+      if (!userData || typeof userData !== 'object' || !('role' in userData) || (userData as { role: string }).role !== 'admin') {
         router.push('/');
       }
     } catch (error) {

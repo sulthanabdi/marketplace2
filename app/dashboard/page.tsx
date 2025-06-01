@@ -11,6 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlusCircle, Package, ShoppingCart, MessageSquare, TrendingUp, DollarSign, Users } from 'lucide-react';
 import { Database } from '@/types/supabase';
 import { createFlipDisbursement } from '@/lib/flip';
+import { User as SupabaseUser } from '@/types/supabase';
+
+type User = SupabaseUser & { whatsapp?: string | null };
 
 interface Withdrawal {
   id: string;
@@ -24,15 +27,6 @@ interface Withdrawal {
   disbursement_status?: string;
   disbursement_response?: any;
   processed_at?: string;
-}
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  withdrawal_method?: string;
-  withdrawal_account?: string;
-  withdrawal_name?: string;
 }
 
 export default function DashboardPage() {
@@ -68,10 +62,11 @@ export default function DashboardPage() {
       .single();
 
       if (userData && typeof userData === 'object' && 'withdrawal_method' in userData) {
-        setUser(userData);
-        setWithdrawalMethod(userData.withdrawal_method || '');
-        setWithdrawalAccount(userData.withdrawal_account || '');
-        setWithdrawalName(userData.withdrawal_name || '');
+        const userTyped = userData as User;
+        setUser(userTyped);
+        setWithdrawalMethod(userTyped.withdrawal_method || '');
+        setWithdrawalAccount(userTyped.withdrawal_account || '');
+        setWithdrawalName(userTyped.withdrawal_name || '');
       }
 
       // Fetch products
@@ -132,7 +127,9 @@ export default function DashboardPage() {
         .order('created_at', { ascending: false });
 
       const validWithdrawals = Array.isArray(withdrawalHistory)
-        ? withdrawalHistory.filter(w => typeof w === 'object' && w !== null && 'id' in w && 'status' in w)
+        ? withdrawalHistory
+            .filter(w => typeof w === 'object' && w !== null && !('error' in w))
+            .map(w => w as unknown as Withdrawal)
         : [];
       setWithdrawals(validWithdrawals);
 
@@ -144,7 +141,9 @@ export default function DashboardPage() {
         .eq('status', 'completed');
 
       const total = Array.isArray(completedWithdrawals)
-        ? completedWithdrawals.filter(w => typeof w === 'object' && w !== null && 'amount' in w)
+        ? completedWithdrawals
+            .filter(w => typeof w === 'object' && w !== null && !('error' in w))
+            .map(w => w as unknown as { amount: number })
             .reduce((sum, w) => sum + w.amount, 0)
         : 0;
       setTotalWithdrawn(total);
