@@ -187,6 +187,9 @@ export default function ProfilePage() {
     }
   };
 
+  // Helper untuk cek kelengkapan data rekening
+  const isBankDataComplete = bankCode && bankAccountNumber && bankAccountName && !bankError;
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -210,6 +213,19 @@ export default function ProfilePage() {
           {success && (
             <div className="mb-4 p-4 bg-green-50 text-green-700 rounded-md">
               {success}
+            </div>
+          )}
+
+          {/* Checklist status data rekening */}
+          {isBankDataComplete ? (
+            <div className="mb-4 p-4 bg-green-50 text-green-700 rounded-md flex items-center gap-2">
+              <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+              <span>Data rekening lengkap. Anda siap menerima pembayaran otomatis!</span>
+            </div>
+          ) : (
+            <div className="mb-4 p-4 bg-red-50 text-red-700 rounded-md flex items-center gap-2">
+              <svg className="h-5 w-5 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              <span>Data rekening belum lengkap. Silakan lengkapi agar bisa menerima pembayaran.</span>
             </div>
           )}
 
@@ -415,7 +431,7 @@ export default function ProfilePage() {
             <div className="flex justify-end">
               <button
                 type="submit"
-                disabled={isSaving}
+                disabled={isSaving || !isBankDataComplete}
                 className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
               >
                 {isSaving ? 'Saving...' : 'Save Changes'}
