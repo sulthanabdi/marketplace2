@@ -184,20 +184,47 @@ export default async function TransactionPage({ params }: { params: { orderId: s
               <div>
                 <dt className="text-sm font-medium text-gray-500">Seller Payment</dt>
                 <dd className="mt-1 text-sm text-gray-900">
+                  {/* Badge status */}
                   {transaction.seller_payment_status === 'processed' ? (
-                    <div>
-                      <p>Status: Processed</p>
-                      <p>Amount: Rp {transaction.seller_payment_amount?.toLocaleString('id-ID')}</p>
-                      <p>Disbursement ID: {transaction.seller_payment_details?.id}</p>
+                    <div className="flex flex-col gap-1">
+                      <span className="inline-block px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-xs font-semibold w-max mb-1">Success</span>
+                      <p>Amount: <span className="font-medium">Rp {transaction.seller_payment_amount?.toLocaleString('id-ID')}</span></p>
+                      {transaction.seller_payment_details ? (
+                        <div className="text-xs text-gray-700 mt-1">
+                          {('bank_code' in transaction.seller_payment_details && transaction.seller_payment_details.bank_code)
+                            ? (<div>Bank: {transaction.seller_payment_details.bank_code}</div>)
+                            : null}
+                          {('ewallet_type' in transaction.seller_payment_details && transaction.seller_payment_details.ewallet_type)
+                            ? (<div>E-Wallet: {transaction.seller_payment_details.ewallet_type}</div>)
+                            : null}
+                          {('account_number' in transaction.seller_payment_details && transaction.seller_payment_details.account_number)
+                            ? (<div>Account: {transaction.seller_payment_details.account_number}</div>)
+                            : null}
+                          {('mobile_number' in transaction.seller_payment_details && transaction.seller_payment_details.mobile_number)
+                            ? (<div>Phone: {transaction.seller_payment_details.mobile_number}</div>)
+                            : null}
+                          {transaction.seller_payment_details.id && (
+                            <div>Disbursement ID: {transaction.seller_payment_details.id}</div>
+                          )}
+                          {transaction.seller_payment_details.created_at && (
+                            <div>Date: {new Date(transaction.seller_payment_details.created_at).toLocaleString('id-ID')}</div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-500">Payout processed, details unavailable.</div>
+                      )}
                     </div>
-                  ) : 
-                   transaction.seller_payment_status === 'failed' ? (
-                    <div>
-                      <p>Status: Failed</p>
-                      <p>Error: {transaction.seller_payment_error}</p>
+                  ) : transaction.seller_payment_status === 'failed' ? (
+                    <div className="flex flex-col gap-1">
+                      <span className="inline-block px-2 py-0.5 rounded-full bg-red-100 text-red-800 text-xs font-semibold w-max mb-1">Failed</span>
+                      <p className="text-red-700 text-xs">{transaction.seller_payment_error || 'Payout failed. Please contact admin.'}</p>
                     </div>
-                  ) : 
-                   'Pending'}
+                  ) : (
+                    <div className="flex flex-col gap-1">
+                      <span className="inline-block px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 text-xs font-semibold w-max mb-1">Pending</span>
+                      <span className="text-xs text-gray-500">Pembayaran ke penjual akan diproses otomatis dalam 1x24 jam setelah pembayaran sukses.</span>
+                    </div>
+                  )}
                 </dd>
               </div>
             </div>
