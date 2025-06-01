@@ -1,7 +1,7 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { createFlipDisbursement } from '@/lib/flip';
+import { createXenditDisbursement } from '@/lib/xendit';
 
 export async function POST(request: Request) {
   try {
@@ -73,18 +73,46 @@ export async function POST(request: Request) {
         
         console.log('Product update result:', { error: productError });
 
-        // Process seller payment through Flip disbursement
+        // Process seller payment through Xendit disbursement
         try {
           // Calculate seller amount (after platform fee)
           const platformFee = 0.05; // 5% platform fee
           const sellerAmount = transaction.amount * (1 - platformFee);
 
-          // Create disbursement to seller
-          const disbursement = await createFlipDisbursement({
+          // Ambil data seller dari tabel users
+          const { data: sellerUser, error: sellerUserError } = await supabase
+            .from('users')
+            .select('name, bank_code, bank_account_number')
+            .eq('id', transaction.seller_id)
+            .single();
+
+          let sellerBankCode = 'BCA';
+          let sellerAccountNumber = null;
+          let sellerAccountName = null;
+          if (sellerUser) {
+            sellerBankCode = sellerUser.bank_code || 'BCA';
+            sellerAccountNumber = sellerUser.bank_account_number || null;
+            sellerAccountName = sellerUser.name || null;
+          }
+
+          // Fallback: jika tidak ada di users, ambil dari produk (jika ada)
+          if (!sellerAccountNumber && transaction.products && transaction.products.seller_phone) {
+            sellerAccountNumber = transaction.products.seller_phone;
+          }
+          if (!sellerAccountName && transaction.products && transaction.products.seller_name) {
+            sellerAccountName = transaction.products.seller_name;
+          }
+
+          if (!sellerAccountNumber || !sellerAccountName) {
+            throw new Error('Data rekening penjual tidak lengkap');
+          }
+
+          // Create disbursement to seller via Xendit
+          const disbursement = await createXenditDisbursement({
             amount: sellerAmount,
-            bank_code: 'bca', // Assuming seller's bank is BCA
-            account_number: transaction.products.seller_phone,
-            account_holder_name: transaction.products.seller_name,
+            bank_code: sellerBankCode,
+            account_number: sellerAccountNumber,
+            account_holder_name: sellerAccountName,
             remark: `Payment for order ${transaction.order_id}`
           });
 
