@@ -1,8 +1,8 @@
 import fetch from 'node-fetch';
 
-const XENDIT_API_KEY = process.env.XENDIT_API_KEY || '';
+const XENDIT_API_KEY_DISBURSE = process.env.XENDIT_API_KEY_DISBURSE || '';
+const XENDIT_API_KEY_EWALLET = process.env.XENDIT_API_KEY_EWALLET || '';
 const XENDIT_API_BASE_URL = 'https://api.xendit.co/disbursements';
-const XENDIT_AUTH_HEADER = `Basic ${Buffer.from(XENDIT_API_KEY + ':').toString('base64')}`;
 
 export async function createXenditDisbursement({
   amount,
@@ -17,6 +17,7 @@ export async function createXenditDisbursement({
   account_holder_name: string;
   remark?: string;
 }) {
+  const XENDIT_AUTH_HEADER = `Basic ${Buffer.from(XENDIT_API_KEY_DISBURSE + ':').toString('base64')}`;
   const res = await fetch(XENDIT_API_BASE_URL, {
     method: 'POST',
     headers: {
@@ -58,6 +59,7 @@ export async function createXenditEwalletDisbursement({
   reference_id?: string;
   success_redirect_url?: string;
 }) {
+  const XENDIT_AUTH_HEADER = `Basic ${Buffer.from(XENDIT_API_KEY_EWALLET + ':').toString('base64')}`;
   const res = await fetch('https://api.xendit.co/ewallets/charges', {
     method: 'POST',
     headers: {
