@@ -4,6 +4,15 @@ const XENDIT_API_KEY_DISBURSE = process.env.XENDIT_API_KEY_DISBURSE || '';
 const XENDIT_API_KEY_EWALLET = process.env.XENDIT_API_KEY_EWALLET || '';
 const XENDIT_API_BASE_URL = 'https://api.xendit.co/disbursements';
 
+const channelCodeMap: Record<string, string> = {
+  DANA: 'ID_DANA',
+  OVO: 'ID_OVO',
+  GOPAY: 'ID_GOPAY',
+  SHOPEEPAY: 'ID_SHOPEEPAY',
+  LINKAJA: 'ID_LINKAJA',
+  PAYTREN: 'ID_PAYTREN',
+};
+
 function toE164(phone: string): string {
   if (phone.startsWith('0')) return '+62' + phone.slice(1);
   if (phone.startsWith('+')) return phone;
@@ -78,6 +87,7 @@ export async function createXenditEwalletDisbursement({
       amount,
       ewallet_type,
       checkout_method: 'ONE_TIME_PAYMENT',
+      channel_code: channelCodeMap[ewallet_type],
       channel_properties: {
         mobile_number: toE164(mobile_number),
         success_redirect_url,
