@@ -41,18 +41,9 @@ interface Product {
   seller_whatsapp: string;
 }
 
-interface ChatMessage {
-  id: string;
-  message: string;
-  created_at: string;
-  sender_id: string;
-  receiver_id: string;
-  sender_name: string;
-}
-
 function ChatBox({ productId, sellerId, userId }: { productId: string; sellerId: string; userId: string | undefined }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const supabase = createClientComponentClient<Database>();
@@ -80,10 +71,17 @@ function ChatBox({ productId, sellerId, userId }: { productId: string; sellerId:
         return;
       }
 
-      setMessages(data.map(msg => ({
-        ...msg,
-        sender_name: msg.sender.name
-      })));
+      if (data) {
+        const formattedMessages = data.map((msg: any) => ({
+          id: String(msg.id),
+          message: String(msg.message),
+          created_at: String(msg.created_at),
+          sender_id: String(msg.sender_id),
+          receiver_id: String(msg.receiver_id),
+          sender_name: String((msg.sender as { name: string }).name)
+        }));
+        setMessages(formattedMessages);
+      }
       setIsLoading(false);
     };
 
@@ -99,10 +97,17 @@ function ChatBox({ productId, sellerId, userId }: { productId: string; sellerId:
           filter: `product_id=eq.${productId}`
         }, 
         (payload) => {
-          const newMessage = payload.new as ChatMessage;
+          const newMessage = payload.new as any;
           if ((newMessage.sender_id === userId && newMessage.receiver_id === sellerId) ||
               (newMessage.sender_id === sellerId && newMessage.receiver_id === userId)) {
-            setMessages(prev => [...prev, newMessage]);
+            setMessages(prev => [...prev, {
+              id: String(newMessage.id),
+              message: String(newMessage.message),
+              created_at: String(newMessage.created_at),
+              sender_id: String(newMessage.sender_id),
+              receiver_id: String(newMessage.receiver_id),
+              sender_name: String((newMessage.sender as { name: string }).name)
+            }]);
           }
         }
       )
@@ -217,6 +222,7 @@ function ProductContent({ productId }: { productId: string }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const supabase = createClientComponentClient<Database>();
   const { isInWishlist } = useWishlist();
 
@@ -226,6 +232,7 @@ function ProductContent({ productId }: { productId: string }) {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           setIsAuthenticated(true);
+          setCurrentUserId(user.id);
         }
 
         const { data: productData, error: productError } = await supabase
@@ -353,6 +360,11 @@ function ProductContent({ productId }: { productId: string }) {
                   isSold={product.is_sold}
                   userId={product.user_id}
                 />
+                <ProductDetail 
+                  productId={product.id}
+                  sellerId={product.user_id}
+                  userId={product.user_id}
+                />
                 {!isOwner && !product.is_sold && isAuthenticated && (
                   <div className="mt-6">
                     <PaymentButton 
@@ -362,7 +374,7 @@ function ProductContent({ productId }: { productId: string }) {
                     <ChatBox 
                       productId={product.id}
                       sellerId={product.user_id}
-                      userId={user?.id}
+                      userId={currentUserId}
                     />
                   </div>
                 )}
