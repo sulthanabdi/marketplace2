@@ -10,6 +10,7 @@ import PaymentButton from '@/app/components/PaymentButton';
 import { useWishlist } from '@/app/context/WishlistContext';
 import { WishlistProvider } from '@/app/context/WishlistContext';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 type ProductWithSeller = {
   id: string;
@@ -73,6 +74,7 @@ function ProductContent({ productId }: { productId: string }) {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const supabase = createClientComponentClient<Database>();
   const { isInWishlist } = useWishlist();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -199,11 +201,21 @@ function ProductContent({ productId }: { productId: string }) {
                 <>
                   <button
                     className="w-full bg-[color:var(--color-primary)] text-white py-3 rounded-md font-semibold hover:bg-red-700 transition"
+                    onClick={() => router.push(`/dashboard/products/edit/${product.id}`)}
                   >
                     Edit Product
                   </button>
                   <button
                     className="w-full bg-gray-200 text-gray-800 py-3 rounded-md font-semibold hover:bg-gray-300 transition"
+                    onClick={async () => {
+                      const { error } = await supabase
+                        .from('products')
+                        .update({ is_sold: true })
+                        .eq('id', product.id);
+                      if (!error) {
+                        window.location.reload();
+                      }
+                    }}
                   >
                     Mark as Sold
                   </button>
@@ -224,11 +236,10 @@ function ProductContent({ productId }: { productId: string }) {
                   >
                     Remove from Wishlist
                   </button>
-                  <button
-                    className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition"
-                  >
-                    Pay Rp {new Intl.NumberFormat('id-ID').format(product.price)}
-                  </button>
+                  <PaymentButton 
+                    productId={product.id}
+                    amount={product.price}
+                  />
                   <ChatBox 
                     productId={product.id}
                     sellerId={product.user_id}
