@@ -201,7 +201,7 @@ function ProductContent({ productId }: { productId: string }) {
                 <>
                   <button
                     className="w-full bg-[color:var(--color-primary)] text-white py-3 rounded-md font-semibold hover:bg-red-700 transition"
-                    onClick={() => router.push(`/dashboard/products/edit/${product.id}`)}
+                    onClick={() => router.push(`/product/${product.id}/edit`)}
                   >
                     Edit Product
                   </button>
