@@ -30,6 +30,14 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    --color-primary: #D51C24;
+    --color-gray-dark: #6D6E71;
+    --color-gray-light: #B0B1B3;
+    --color-bg: #FFFFFF;
+    --color-success: #27AE60;
+    --color-warning: #FFC107;
+    --color-error: #B71C1C;
+    --color-info: #1976D2;
   }
   
   body {
@@ -71,8 +79,6 @@
 body {
   background: rgb(var(--background-rgb));
 }
-
-
 
 @layer base {
   * {
