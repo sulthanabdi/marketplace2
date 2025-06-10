@@ -84,34 +84,33 @@ function ProductContent({ productId }: { productId: string }) {
         }
 
         const { data: productData, error: productError } = await supabase
-    .from('products')
-    .select(`
-      id,
-      title,
-      description,
-      price,
-      image_url,
-      condition,
-      user_id,
-      is_sold,
-      created_at,
-      seller:users (
-        name,
-        whatsapp
-      )
-    `)
+          .from('products')
+          .select(`
+            id,
+            title,
+            description,
+            price,
+            image_url,
+            condition,
+            user_id,
+            is_sold,
+            created_at,
+            seller:users (
+              name,
+              whatsapp
+            )
+          `)
           .eq('id', productId)
-    .single();
+          .single();
 
-  if (productError) {
-    console.error('Error fetching product:', productError);
+        if (productError) {
+          console.error('Error fetching product:', productError);
           return;
-  }
+        }
 
         if (productData) {
           const unknownData = productData as unknown;
           const typedProduct = unknownData as ProductWithSeller;
-          
           const formattedProduct: Product = {
             id: typedProduct.id,
             title: typedProduct.title,
@@ -128,7 +127,7 @@ function ProductContent({ productId }: { productId: string }) {
               : typedProduct.seller.whatsapp.startsWith('0')
                 ? '+62' + typedProduct.seller.whatsapp.slice(1)
                 : '+62' + typedProduct.seller.whatsapp
-  };
+          };
           setProduct(formattedProduct);
           setIsOwner(user?.id === typedProduct.user_id);
         }
@@ -136,7 +135,7 @@ function ProductContent({ productId }: { productId: string }) {
         console.error('Error:', error);
       } finally {
         setIsLoading(false);
-  }
+      }
     };
 
     fetchProduct();
@@ -167,76 +166,59 @@ function ProductContent({ productId }: { productId: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8">
-            <div className="relative h-96">
-              <Image
-                src={product.image_url}
-                alt={product.title}
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="object-cover rounded-lg"
-                priority
-              />
-            </div>
+    <div className="min-h-screen bg-[color:var(--color-bg)] py-8">
+      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="relative h-80 w-full">
+            <Image
+              src={product.image_url}
+              alt={product.title}
+              fill
+              className="object-cover rounded-lg"
+              priority
+            />
+          </div>
+          <div className="flex flex-col justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{product.title}</h1>
-              <p className="mt-2 text-2xl font-medium text-primary">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.title}</h1>
+              <p className="text-2xl font-semibold mb-4" style={{ color: 'var(--color-primary)' }}>
                 Rp {new Intl.NumberFormat('id-ID').format(product.price)}
               </p>
-              <p className="mt-4 text-gray-600">{product.description}</p>
-              <div className="mt-6 space-y-4">
-                <div>
-                  <h2 className="text-sm font-medium text-gray-900">Condition</h2>
-                  <p className="mt-1 text-gray-600 capitalize">
-                    {product.condition.replace('_', ' ')}
-                  </p>
-                </div>
-                <div>
-                  <h2 className="text-sm font-medium text-gray-900">Seller</h2>
-                  <p className="mt-1 text-gray-600">{product.seller_name}</p>
-                </div>
-                <ProductActions
-                  productId={product.id}
-                  sellerId={product.user_id}
-                  sellerWhatsapp={product.seller_whatsapp}
-                  title={product.title}
-                  isOwner={isOwner}
-                  isWishlisted={isInWishlist(product.id)}
-                  isSold={product.is_sold}
-                  userId={product.user_id}
-                />
-                <ProductDetail 
-                  productId={product.id}
-                  sellerId={product.user_id}
-                  userId={product.user_id}
-                />
-                {!isOwner && !product.is_sold && isAuthenticated && (
-                  <div className="mt-6">
-                    <PaymentButton 
-                      productId={product.id}
-                      amount={product.price}
-                    />
-                    <ChatBox 
-                      productId={product.id}
-                      sellerId={product.user_id}
-                      userId={currentUserId}
-                    />
-                  </div>
-                )}
-                {!isOwner && !product.is_sold && !isAuthenticated && (
-                  <div className="mt-6">
-                    <Link
-                      href="/login"
-                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 text-center block"
-                    >
-                      Login to Purchase
-                    </Link>
-                  </div>
-                )}
+              <p className="mb-4 text-gray-700">{product.description}</p>
+              <div className="mb-2">
+                <span className="font-medium text-gray-900">Condition: </span>
+                <span className="capitalize">{product.condition.replace('_', ' ')}</span>
               </div>
+              <div className="mb-6">
+                <span className="font-medium text-gray-900">Seller: </span>
+                <span>{product.seller_name}</span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 mt-4">
+              <a
+                href={`https://wa.me/${product.seller_whatsapp.replace('+', '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full bg-[color:var(--color-success)] text-white py-3 rounded-md font-semibold flex items-center justify-center gap-2 hover:bg-green-700 transition"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M20.52 3.48A12.07 12.07 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.11.55 4.16 1.6 5.97L0 24l6.22-1.58A12.13 12.13 0 0 0 12 24c6.63 0 12-5.37 12-12 0-3.21-1.25-6.22-3.48-8.52zM12 22c-1.85 0-3.68-.5-5.25-1.45l-.38-.22-3.69.94.99-3.59-.25-.37A9.93 9.93 0 0 1 2 12c0-5.52 4.48-10 10-10s10 4.48 10 10-4.48 10-10 10zm5.47-7.14c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.27-.47-2.42-1.5-.9-.8-1.5-1.77-1.67-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.5-.5-.67-.5h-.57c-.2 0-.52.07-.8.37-.27.3-1.05 1.02-1.05 2.5 0 1.48 1.08 2.92 1.23 3.12.15.2 2.13 3.25 5.17 4.43.72.31 1.28.5 1.72.64.72.23 1.38.2 1.9.12.58-.09 1.77-.72 2.02-1.41.25-.7.25-1.3.17-1.41-.08-.11-.28-.18-.58-.33z"/></svg>
+                WhatsApp
+              </a>
+              <button
+                className="w-full bg-red-100 text-[color:var(--color-error)] py-3 rounded-md font-semibold hover:bg-red-200 transition"
+              >
+                Remove from Wishlist
+              </button>
+              <button
+                className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition"
+              >
+                Pay Rp {new Intl.NumberFormat('id-ID').format(product.price)}
+              </button>
+              <ChatBox 
+                productId={product.id}
+                sellerId={product.user_id}
+                userId={currentUserId}
+              />
             </div>
           </div>
         </div>
