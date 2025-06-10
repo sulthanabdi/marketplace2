@@ -42,103 +42,6 @@ interface Product {
 }
 
 function ChatBox({ productId, sellerId, userId }: { productId: string; sellerId: string; userId: string | undefined }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<any[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClientComponentClient<Database>();
-
-  useEffect(() => {
-    if (!isOpen || !userId) return;
-
-    const fetchMessages = async () => {
-      const { data, error } = await supabase
-        .from('messages')
-        .select(`
-          id,
-          message,
-          created_at,
-          sender_id,
-          receiver_id,
-          sender:users(name)
-        `)
-        .or(`and(sender_id.eq.${userId},receiver_id.eq.${sellerId}),and(sender_id.eq.${sellerId},receiver_id.eq.${userId})`)
-        .eq('product_id', productId)
-        .order('created_at', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching messages:', error);
-        return;
-      }
-
-      if (data) {
-        const formattedMessages = data.map((msg: any) => ({
-          id: String(msg.id),
-          message: String(msg.message),
-          created_at: String(msg.created_at),
-          sender_id: String(msg.sender_id),
-          receiver_id: String(msg.receiver_id),
-          sender_name: String((msg.sender as { name: string }).name)
-        }));
-        setMessages(formattedMessages);
-      }
-      setIsLoading(false);
-    };
-
-    fetchMessages();
-
-    const subscription = supabase
-      .channel(`product_${productId}`)
-      .on('postgres_changes', 
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'messages',
-          filter: `product_id=eq.${productId}`
-        }, 
-        (payload) => {
-          const newMessage = payload.new as any;
-          if ((newMessage.sender_id === userId && newMessage.receiver_id === sellerId) ||
-              (newMessage.sender_id === sellerId && newMessage.receiver_id === userId)) {
-            setMessages(prev => [...prev, {
-              id: String(newMessage.id),
-              message: String(newMessage.message),
-              created_at: String(newMessage.created_at),
-              sender_id: String(newMessage.sender_id),
-              receiver_id: String(newMessage.receiver_id),
-              sender_name: String((newMessage.sender as { name: string }).name)
-            }]);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [isOpen, productId, sellerId, userId, supabase]);
-
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !userId) return;
-
-    const { error } = await supabase
-      .from('messages')
-      .insert({
-        product_id: productId,
-        sender_id: userId,
-        receiver_id: sellerId,
-        message: newMessage.trim()
-      });
-
-    if (error) {
-      console.error('Error sending message:', error);
-      return;
-    }
-
-    setNewMessage('');
-  };
-
   if (!userId) {
     return (
       <Link
@@ -149,71 +52,16 @@ function ChatBox({ productId, sellerId, userId }: { productId: string; sellerId:
       </Link>
     );
   }
-
   if (userId === sellerId) {
     return null;
   }
-
   return (
-    <div className="mt-6">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-primary text-white px-6 py-3 rounded-md text-sm font-medium hover:bg-primary/90"
-      >
-        {isOpen ? 'Close Chat' : 'Chat with Seller'}
-      </button>
-
-      {isOpen && (
-        <div className="mt-4 bg-white rounded-lg shadow-sm p-4">
-          <div className="h-96 overflow-y-auto mb-4 space-y-4">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            ) : messages.length === 0 ? (
-              <div className="text-center text-gray-500">
-                No messages yet. Start the conversation!
-              </div>
-            ) : (
-              messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex ${msg.sender_id === userId ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[70%] rounded-lg p-3 ${
-                      msg.sender_id === userId
-                        ? 'bg-primary text-white'
-                        : 'bg-gray-100 text-gray-900'
-                    }`}
-                  >
-                    <p className="text-sm">{msg.message}</p>
-                    <p className="text-xs mt-1 opacity-70">
-                      {new Date(msg.created_at).toLocaleTimeString()}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-          <form onSubmit={handleSendMessage} className="flex gap-2">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-            <button
-              type="submit"
-              className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90"
-            >
-              Send
-            </button>
-          </form>
-        </div>
-      )}
-    </div>
+    <Link
+      href={`/chat/${productId}/${sellerId}`}
+      className="w-full bg-primary text-white px-6 py-3 rounded-md text-sm font-medium hover:bg-primary/90 text-center block"
+    >
+      Chat with Seller
+    </Link>
   );
 }
 

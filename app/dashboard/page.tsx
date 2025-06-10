@@ -692,16 +692,16 @@ export default function DashboardPage() {
                           key={withdrawal.id}
                           className="border rounded-lg p-4 hover:bg-gray-50 transition-colors flex justify-between items-center"
                         >
-                          <div>
+                            <div>
                             <p className="text-lg font-semibold text-gray-900">
-                              Rp {new Intl.NumberFormat('id-ID').format(withdrawal.amount)}
-                            </p>
+                                Rp {new Intl.NumberFormat('id-ID').format(withdrawal.amount)}
+                              </p>
                             <p className="text-xs text-gray-500">
                               {new Date(withdrawal.created_at).toLocaleString('id-ID')}
-                            </p>
+                              </p>
                             <p className="text-xs text-gray-500">
                               {withdrawal.withdrawal_method.toUpperCase()} • {withdrawal.withdrawal_account}
-                            </p>
+                              </p>
                           </div>
                           <span className={`px-2 py-1 rounded-full text-xs font-bold
                             ${withdrawal.status === 'completed' ? 'bg-green-100 text-green-800' :

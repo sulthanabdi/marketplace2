@@ -393,9 +393,9 @@ export default function ProfilePage() {
                         : `Format: ${'x'.repeat(SUPPORTED_BANKS.find(b => b.code === bankCode)?.accountLength || 0)}`}
                     </p>
                   )}
-                </div>
+            </div>
 
-                <div>
+            <div>
                   <div className="flex items-center gap-2">
                     <label htmlFor="bankAccountName" className="block text-sm font-medium text-gray-700">
                       {accountType === 'ewallet' ? 'Account Name' : 'Account Holder Name'}
