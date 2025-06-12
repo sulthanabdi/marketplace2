@@ -32,7 +32,7 @@ export default function Home() {
         <section className="bg-white py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900">Why Choose CampusTrade?</h2>
+              <h2 className="text-3xl font-bold text-gray-900">Why Choose Telkommerce?</h2>
               <div className="w-20 h-1 bg-primary mx-auto mt-4"></div>
             </div>
             <div className="grid md:grid-cols-3 gap-8">
@@ -95,7 +95,7 @@ export default function Home() {
               <div className="md:w-1/2">
                 <h3 className="text-2xl font-bold mb-4">Our Mission</h3>
                 <p className="text-gray-600 mb-4">
-                  CampusTrade was founded by students, for students. We noticed how much perfectly good stuff gets thrown away at the end of each semester, and we wanted to create a better way.
+                  Telkommerce was founded by students, for students. We noticed how much perfectly good stuff gets thrown away at the end of each semester, and we wanted to create a better way.
                 </p>
                 <p className="text-gray-600 mb-6">
                   Our platform connects buyers and sellers within your campus community, making it easy to find what you need and sell what you don't. It's sustainable, economical, and convenient.
@@ -118,7 +118,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-xl font-bold mb-4">CampusTrade</h3>
+              <h3 className="text-xl font-bold mb-4">Telkommerce</h3>
               <p className="text-gray-400">The easiest way to buy and sell used items on campus.</p>
             </div>
             <div>
@@ -199,7 +199,7 @@ export default function Home() {
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-gray-800 text-center text-gray-400">
-            <p>&copy; {new Date().getFullYear()} CampusTrade. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Telkommerce. All rights reserved.</p>
           </div>
         </div>
       </footer>
