@@ -9,6 +9,9 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { Plus, Search, Filter, Package, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 type ProductWithSeller = Database['public']['Tables']['products']['Row'] & {
   category?: string;
@@ -102,45 +105,42 @@ export default function ProductsPage() {
   };
 
   if (loading) {
-      return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-pink-50 to-rose-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="animate-pulse space-y-8">
-            <div className="h-8 w-48 bg-gray-200 rounded"></div>
-            <div className="h-12 bg-gray-200 rounded"></div>
+            {/* Header Skeleton */}
+            <div className="flex justify-between items-center">
+              <div className="h-10 w-48 bg-gray-200 rounded-xl"></div>
+              <div className="h-12 w-40 bg-gray-200 rounded-xl"></div>
+            </div>
+            
+            {/* Filter Skeleton */}
+            <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <div className="h-6 w-32 bg-gray-200 rounded"></div>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="h-12 bg-gray-200 rounded-xl"></div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Products Grid Skeleton */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <Card key={i} className="border-0 shadow-lg bg-white/80 backdrop-blur-sm overflow-hidden">
                   <div className="h-48 bg-gray-200"></div>
-                  <div className="p-4 space-y-3">
+                  <CardContent className="p-4 space-y-3">
                     <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                     <div className="h-4 bg-gray-200 rounded w-1/2"></div>
                     <div className="h-6 bg-gray-200 rounded w-1/3"></div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ))}
-            </div>
-          </div>
-          </div>
-        </div>
-      );
-    }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-            </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error loading products</h3>
-                <div className="mt-2 text-sm text-red-700">{error}</div>
-              </div>
             </div>
           </div>
         </div>
@@ -148,42 +148,96 @@ export default function ProductsPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-pink-50 to-rose-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+            <CardContent className="p-8">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto bg-red-100 rounded-2xl flex items-center justify-center mb-4">
+                  <svg className="h-8 w-8 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Error loading products</h3>
+                <p className="text-gray-600 mb-6">{error}</p>
+                <Button 
+                  onClick={() => fetchProducts()} 
+                  className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Try Again
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-pink-50 to-rose-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-            <button
+          {/* Header Section */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-red-900 to-rose-700 bg-clip-text text-transparent mb-2">
+                Discover Products
+              </h1>
+              <p className="text-gray-600 text-lg">Find amazing items from our community of sellers</p>
+            </div>
+            <Button
               onClick={handleUploadClick}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              className="gap-2 shadow-lg hover:shadow-xl transition-all duration-200 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white px-6 py-3 rounded-xl font-semibold"
             >
+              <Plus className="h-5 w-5" />
               Upload Product
-            </button>
+            </Button>
           </div>
           
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-            <ProductFilter onFilterChange={handleFilterChange} />
-          </div>
+          {/* Filter Section */}
+          <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm mb-8">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Filter className="h-5 w-5 text-red-600" />
+                <h2 className="text-lg font-semibold text-gray-900">Filter Products</h2>
+              </div>
+              <ProductFilter onFilterChange={handleFilterChange} />
+            </CardContent>
+          </Card>
 
-          <div className="mb-6 flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              {products.length} product{products.length !== 1 ? 's' : ''} found
+          {/* Results Summary */}
+          <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <Package className="h-5 w-5 text-red-600" />
+              </div>
+              <div>
+                <p className="text-lg font-semibold text-gray-900">
+                  {products.length} product{products.length !== 1 ? 's' : ''} found
+                </p>
+                <p className="text-sm text-gray-500">Browse through our collection</p>
+              </div>
             </div>
             {products.length > 0 && (
               <Link
                 href="/products"
-                className="text-sm text-primary hover:text-primary/90"
+                className="text-red-600 hover:text-red-700 font-medium text-sm flex items-center gap-1 transition-colors duration-200"
               >
+                <RefreshCw className="h-4 w-4" />
                 Reset filters
               </Link>
             )}
           </div>
 
+          {/* Products Grid */}
           {products.length > 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
@@ -191,8 +245,15 @@ export default function ProductsPage() {
               transition={{ duration: 0.5 }}
               className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
             >
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+              {products.map((product, index) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <ProductCard product={product} />
+                </motion.div>
               ))}
             </motion.div>
           ) : (
@@ -200,35 +261,51 @@ export default function ProductsPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
-              className="text-center py-12 bg-white rounded-lg shadow-sm"
             >
-              <svg
-                className="mx-auto h-12 w-12 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <h3 className="mt-2 text-lg font-medium text-gray-900">No products found</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Try adjusting your search or filter criteria
-              </p>
-              <div className="mt-6">
-                <Link
-                  href="/products"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                >
-                  Reset filters
-                </Link>
-              </div>
+              <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+                <CardContent className="p-12">
+                  <div className="text-center">
+                    <div className="w-24 h-24 mx-auto bg-gradient-to-br from-red-100 to-rose-100 rounded-3xl flex items-center justify-center mb-6">
+                      <Search className="h-12 w-12 text-red-500" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">No products found</h3>
+                    <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                      Try adjusting your search criteria or browse our categories to find what you're looking for
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Link href="/products">
+                        <Button 
+                          variant="outline" 
+                          className="shadow-sm hover:shadow-md transition-all duration-200 border-red-200 text-red-600 hover:bg-red-50"
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Reset filters
+                        </Button>
+                      </Link>
+                      <Button
+                        onClick={handleUploadClick}
+                        className="gap-2 shadow-lg hover:shadow-xl transition-all duration-200 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Upload Product
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </motion.div>
+          )}
+
+          {/* Load More Section (if needed) */}
+          {products.length > 0 && products.length >= 12 && (
+            <div className="text-center mt-12">
+              <Button 
+                variant="outline" 
+                className="shadow-sm hover:shadow-md transition-all duration-200 border-red-200 text-red-600 hover:bg-red-50 px-8 py-3"
+              >
+                Load More Products
+              </Button>
+            </div>
           )}
         </motion.div>
       </div>
