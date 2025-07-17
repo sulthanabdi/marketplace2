@@ -4,40 +4,51 @@ import SellItemButton from '@/app/components/SellItemButton';
 export default function Home() {
   return (
     <div className="min-h-screen flex flex-col font-manrope bg-gray-50">
-      {/* Header - Add your header content here if needed */}
+      {/* Header - Tempat untuk menambahkan header jika diperlukan */}
       
-      {/* Hero Section */}
+      {/* Bagian Hero - Bagian utama halaman */}
       <main className="flex-grow">
+        {/* Section Hero dengan padding dan margin yang responsif */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
           <div className="text-center">
+            {/* Judul utama dengan styling responsif */}
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
               Buy and Sell Used Items <br /> on <span className="text-primary">Campus</span>
             </h1>
+            {/* Deskripsi dengan styling responsif */}
             <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
               Connect with fellow students to sell items safely and easily. Save money and reduce waste!
             </p>
+            {/* Container untuk tombol-tombol dengan flexbox responsif */}
             <div className="flex flex-col sm:flex-row justify-center gap-4">
+              {/* Tombol Browse Products */}
               <Link
                 href="/products"
                 className="bg-primary text-white px-6 py-3 md:px-8 md:py-4 rounded-lg text-lg font-medium hover:bg-primary/90 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               >
                 Browse Products
               </Link>
+              {/* Komponen tombol jual barang */}
               <SellItemButton />
             </div>
           </div>
         </section>
 
-        {/* Features Section */}
+        {/* Bagian Fitur - Menampilkan keunggulan platform */}
         <section className="bg-white py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Header bagian fitur */}
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-gray-900">Why Choose Telkommerce?</h2>
+              {/* Garis dekoratif di bawah judul */}
               <div className="w-20 h-1 bg-primary mx-auto mt-4"></div>
             </div>
+            {/* Grid untuk menampilkan 3 fitur utama */}
             <div className="grid md:grid-cols-3 gap-8">
+              {/* Array data fitur yang akan di-render */}
               {[
                 {
+                  // Icon untuk fitur Easy Trading
                   icon: (
                     <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -47,6 +58,7 @@ export default function Home() {
                   description: "Buy and sell items with fellow students in just a few clicks."
                 },
                 {
+                  // Icon untuk fitur Trusted Community
                   icon: (
                     <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -56,6 +68,7 @@ export default function Home() {
                   description: "All users are verified campus members for safe transactions."
                 },
                 {
+                  // Icon untuk fitur Sustainable
                   icon: (
                     <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -65,11 +78,15 @@ export default function Home() {
                   description: "Reduce waste by giving items a second life on campus."
                 }
               ].map((feature, index) => (
+                // Render setiap fitur dengan styling yang konsisten
                 <div key={index} className="text-center p-6 rounded-xl hover:shadow-md transition duration-300 border border-gray-100">
+                  {/* Container untuk icon dengan background berwarna */}
                   <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                     {feature.icon}
                   </div>
+                  {/* Judul fitur */}
                   <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                  {/* Deskripsi fitur */}
                   <p className="text-gray-600">{feature.description}</p>
                 </div>
               ))}
@@ -77,14 +94,18 @@ export default function Home() {
           </div>
         </section>
 
-        {/* About Us Section */}
+        {/* Bagian About Us - Tentang platform */}
         <section id="about" className="py-16 bg-gray-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Header bagian About Us */}
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-gray-900">About Telkommerce</h2>
+              {/* Garis dekoratif */}
               <div className="w-20 h-1 bg-primary mx-auto mt-4"></div>
             </div>
+            {/* Layout flexbox untuk konten dan gambar */}
             <div className="md:flex items-center gap-12">
+              {/* Container untuk gambar */}
               <div className="md:w-1/2 mb-8 md:mb-0">
                 <img 
                   src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" 
@@ -92,15 +113,20 @@ export default function Home() {
                   className="rounded-lg shadow-lg w-full object-cover h-80 md:h-auto"
                 />
               </div>
+              {/* Container untuk teks konten */}
               <div className="md:w-1/2">
                 <h3 className="text-2xl font-bold mb-4">Our Mission</h3>
+                {/* Paragraf pertama tentang misi */}
                 <p className="text-gray-600 mb-4">
                   Telkommerce was founded by students, for students. We noticed how much perfectly good stuff gets thrown away at the end of each semester, and we wanted to create a better way.
                 </p>
+                {/* Paragraf kedua tentang platform */}
                 <p className="text-gray-600 mb-6">
                   Our platform connects buyers and sellers within your campus community, making it easy to find what you need and sell what you don't. It's sustainable, economical, and convenient.
                 </p>
+                {/* Container untuk tag-tag */}
                 <div className="flex flex-wrap gap-2">
+                  {/* Render tag-tag dengan styling */}
                   {['Sustainable', 'Student-Run', 'Campus-Focused'].map((tag, index) => (
                     <span key={index} className="bg-primary text-white px-4 py-2 rounded-full text-sm font-medium">
                       {tag}
@@ -113,17 +139,21 @@ export default function Home() {
         </section>
       </main>
 
-      {/* Footer */}
+      {/* Footer - Bagian bawah website */}
       <footer id="contact" className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Grid untuk 4 kolom footer */}
           <div className="grid md:grid-cols-4 gap-8">
+            {/* Kolom pertama - Tentang Telkommerce */}
             <div>
               <h3 className="text-xl font-bold mb-4">Telkommerce</h3>
               <p className="text-gray-400">The easiest way to buy and sell used items on campus.</p>
             </div>
+            {/* Kolom kedua - Quick Links */}
             <div>
               <h4 className="text-lg font-medium mb-4">Quick Links</h4>
               <ul className="space-y-2">
+                {/* Array link-link cepat */}
                 {[
                   { href: "/", label: "Home" },
                   { href: "/products", label: "Products" },
@@ -138,9 +168,11 @@ export default function Home() {
                 ))}
               </ul>
             </div>
+            {/* Kolom ketiga - Help */}
             <div>
               <h4 className="text-lg font-medium mb-4">Help</h4>
               <ul className="space-y-2">
+                {/* Array link-link bantuan */}
                 {[
                   { href: "#", label: "FAQs" },
                   { href: "#", label: "Safety Tips" },
@@ -155,11 +187,14 @@ export default function Home() {
                 ))}
               </ul>
             </div>
+            {/* Kolom keempat - Contact Us */}
             <div>
               <h4 className="text-lg font-medium mb-4">Contact Us</h4>
               <p className="text-gray-400 mb-2">campus@trademail.com</p>
               <p className="text-gray-400 mb-4">+1 (555) 123-4567</p>
+              {/* Container untuk social media icons */}
               <div className="flex space-x-4">
+                {/* Array social media dengan icon */}
                 {[
                   {
                     name: "Facebook",
@@ -186,6 +221,7 @@ export default function Home() {
                     )
                   }
                 ].map((social, index) => (
+                  // Render setiap social media link
                   <Link 
                     key={index} 
                     href="#" 
@@ -198,6 +234,7 @@ export default function Home() {
               </div>
             </div>
           </div>
+          {/* Copyright section di bagian bawah footer */}
           <div className="mt-12 pt-8 border-t border-gray-800 text-center text-gray-400">
             <p>&copy; {new Date().getFullYear()} Telkommerce. All rights reserved.</p>
           </div>

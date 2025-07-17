@@ -40,13 +40,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // Set session cookie
     cookies().set('user_id', user.id.toString(), {
       httpOnly: true,
-      secure: false, // Allow cookies in development
+      secure: false,
       sameSite: 'lax',
-      path: '/', // Ensure cookie is available across all paths
-      maxAge: 60 * 60 * 24 * 7, // 1 week
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
     });
 
     return NextResponse.json({

@@ -27,7 +27,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Insert product
     const { data: product, error } = await supabase
       .from('products')
       .insert({
@@ -77,7 +76,6 @@ export async function GET(request: Request) {
       .eq('is_sold', false)
       .order('created_at', { ascending: false });
 
-    // Apply filters
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice');
     const condition = searchParams.get('condition');

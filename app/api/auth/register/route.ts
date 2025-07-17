@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if email already exists
+    // Cek apakah email sudah terdaftar sebelumnya
     const [existingUsers] = await pool.execute(
       'SELECT id FROM users WHERE email = ?',
       [email]
@@ -26,10 +26,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Hash password
+    // Hash password untuk keamanan
     const hashedPassword = await hashPassword(password);
 
-    // Insert new user
+    // Insert user baru ke database
     const [result] = await pool.execute(
       'INSERT INTO users (name, email, password, whatsapp) VALUES (?, ?, ?, ?)',
       [name, email, hashedPassword, whatsapp]
@@ -40,7 +40,9 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
+    // Log error untuk debugging
     console.error('Registration error:', error);
+    // Return error internal server
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

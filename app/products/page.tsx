@@ -44,47 +44,47 @@ export default function ProductsPage() {
       setLoading(true);
       setError(null);
 
-    let query = supabase
-      .from('products')
-      .select(`
-        id,
-        title,
-        description,
-        price,
-        image_url,
-        condition,
-        category,
-        user_id,
-        is_sold,
-        created_at,
-        updated_at,
-        status,
-        verified_at,
-        seller:user_id (
-          name,
-          whatsapp
-        )
-      `)
-      .eq('is_sold', false)
-      .order('created_at', { ascending: false });
+      let query = supabase
+        .from('products')
+        .select(`
+          id,
+          title,
+          description,
+          price,
+          image_url,
+          condition,
+          category,
+          user_id,
+          is_sold,
+          created_at,
+          updated_at,
+          status,
+          verified_at,
+          seller:user_id (
+            name,
+            whatsapp
+          )
+        `)
+        .eq('is_sold', false)
+        .order('created_at', { ascending: false });
 
       if (filters) {
         if (filters.search) {
           query = query.ilike('title', `%${filters.search}%`);
-    }
+        }
         if (filters.category) {
           query = query.eq('category', filters.category);
         }
         if (filters.condition) {
           query = query.eq('condition', filters.condition);
-    }
+        }
         if (filters.minPrice) {
           query = query.gte('price', parseInt(filters.minPrice));
-    }
+        }
         if (filters.maxPrice) {
           query = query.lte('price', parseInt(filters.maxPrice));
         }
-    }
+      }
 
       const { data, error } = await query;
 
