@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { Upload, Camera, Package, DollarSign, Tag, FileText, ArrowLeft, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -208,13 +208,13 @@ export default function UploadPage() {
                       <label htmlFor="description" className="text-sm font-semibold text-gray-700">
                         Description
                       </label>
-                      <Textarea
+                      <textarea
                         name="description"
                         id="description"
                         rows={4}
                         required
                         placeholder="Describe your product in detail..."
-                        className="border-gray-300 focus:border-red-500 focus:ring-red-500 rounded-xl transition-all duration-200 resize-none"
+                        className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 transition-all duration-200 resize-none px-3 py-2"
                       />
                     </div>
 
