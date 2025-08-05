@@ -12,6 +12,8 @@ import { WishlistProvider } from '@/app/context/WishlistContext';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 import { ArrowLeft, Heart, Share2, Clock, User, Tag, MapPin, Star, Edit3, CheckCircle, MessageCircle, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -78,6 +80,7 @@ function ProductContent({ productId }: { productId: string }) {
   const [isOwner, setIsOwner] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const supabase = createClientComponentClient<Database>();
   const { isInWishlist } = useWishlist();
   const router = useRouter();
@@ -236,14 +239,15 @@ function ProductContent({ productId }: { productId: string }) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* Image Section */}
             <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
-              <CardContent className="p-0">
-                <div className="relative h-96 lg:h-[500px] w-full">
+              <CardContent className="p-4">
+                <div className="relative h-80 lg:h-[450px] w-full rounded-xl overflow-hidden mb-4">
                   <Image
                     src={product.image_url}
                     alt={product.title}
                     fill
-                    className="object-cover transition-transform duration-300 hover:scale-105"
+                    className="object-cover transition-transform duration-300 hover:scale-105 cursor-pointer"
                     priority
+                    onClick={() => setLightboxOpen(true)}
                   />
                   {product.is_sold && (
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
@@ -253,14 +257,18 @@ function ProductContent({ productId }: { productId: string }) {
                       </Badge>
                     </div>
                   )}
-                  <div className="absolute top-4 right-4 flex gap-2">
-                    <Button size="sm" variant="secondary" className="bg-white/90 backdrop-blur-sm hover:bg-white">
-                      <Heart className="h-4 w-4" />
-                    </Button>
-                    <Button size="sm" variant="secondary" className="bg-white/90 backdrop-blur-sm hover:bg-white">
-                      <Share2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                </div>
+                <div className="grid grid-cols-5 gap-2">
+                  {[product.image_url, product.image_url, product.image_url, product.image_url, product.image_url].map((img, index) => (
+                    <div key={index} className="relative h-20 w-full rounded-md overflow-hidden cursor-pointer">
+                      <Image
+                        src={img}
+                        alt={`${product.title} thumbnail ${index + 1}`}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -394,6 +402,12 @@ function ProductContent({ productId }: { productId: string }) {
           </Card>
         </motion.div>
       </div>
+
+      <Lightbox
+        open={lightboxOpen}
+        close={() => setLightboxOpen(false)}
+        slides={[{ src: product.image_url }]}
+      />
     </div>
   );
 }
