@@ -55,49 +55,53 @@ export default function Navigation({ session: initialSession }: NavigationProps)
   ];
 
   return (
-    <nav className="bg-white shadow-sm">
+    <nav className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex">
-            <Link href="/" className="flex items-center">
+          <div className="flex items-center">
+            <Link href="/" className="flex items-center gap-2">
+              {/* You can add a logo here if you have one */}
               <span className="text-xl font-bold text-primary">Telkommerce</span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden sm:flex sm:items-center sm:space-x-8">
+          <div className="hidden sm:flex sm:items-center sm:space-x-2">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`relative px-3 py-2 text-sm font-medium ${
+                className={`relative px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   isActive(item.href)
-                    ? 'text-primary'
-                    : 'text-gray-500 hover:text-gray-900'
+                    ? 'text-primary font-semibold'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {item.label}
                 {isActive(item.href) && (
                   <motion.div
                     layoutId="navigation-underline"
-                    className="absolute left-0 right-0 bottom-0 h-0.5 bg-primary"
+                    className="absolute left-0 right-0 -bottom-3 h-0.5 bg-primary"
                     initial={false}
                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   />
                 )}
               </Link>
             ))}
+          </div>
+
+          <div className="hidden sm:flex sm:items-center sm:space-x-4">
             {session ? (
               <button
                 onClick={handleSignOut}
-                className="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-900"
+                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 Sign Out
               </button>
             ) : (
               <Link
                 href="/login"
-                className="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-900"
+                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 Sign In
               </Link>
@@ -108,7 +112,7 @@ export default function Navigation({ session: initialSession }: NavigationProps)
           <div className="flex items-center sm:hidden">
             <button
               type="button"
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+              className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               <span className="sr-only">Open main menu</span>
@@ -151,45 +155,45 @@ export default function Navigation({ session: initialSession }: NavigationProps)
       {/* Mobile Navigation */}
       {isMenuOpen && (
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="sm:hidden"
+          exit={{ opacity: 0, y: -10 }}
+          className="sm:hidden bg-background border-t"
         >
-          <div className="pt-2 pb-3 space-y-1">
+          <div className="pt-2 pb-3 space-y-1 px-2">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`block px-3 py-2 text-base font-medium ${
+                className={`block px-3 py-2 rounded-md text-base font-medium ${
                   isActive(item.href)
-                    ? 'text-primary bg-primary/5'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                    ? 'text-primary bg-primary/10'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                 }`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 {item.label}
               </Link>
             ))}
-            {session ? (
-              <button
-                onClick={handleSignOut}
-                className="block px-3 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50"
-              >
-                Sign Out
-              </button>
-            ) : (
-              <Link
-                href="/login"
-                className="block px-3 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Sign In
-              </Link>
-            )}
+            <div className="border-t border-border pt-4 mt-4">
+              {session ? (
+                <button
+                  onClick={handleSignOut}
+                  className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-foreground hover:bg-secondary"
+                >
+                  Sign Out
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Sign In
+                </Link>
+              )}
+            </div>
           </div>
-        </motion.div>
-      )}
     </nav>
   );
 } 

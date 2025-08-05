@@ -4,80 +4,66 @@
 
 @layer base {
   :root {
-    --font-manrope: 'Manrope', sans-serif;
-    --background: 0 0% 100%; /* Putih */
-    --foreground: 0 0% 10%; /* Abu gelap */
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --background: 220 13% 98%; /* Light Gray: #F9FAFB */
+    --foreground: 224 71% 4%; /* Dark Gray: #111827 */
+
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 224 71% 4%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
-    --primary: 356 100% 45%; /* Merah Telkom: #E60019 */
-    --primary-foreground: 0 0% 100%; /* Putih */
-    --secondary: 0 0% 96.1%; /* Abu muda */
-    --secondary-foreground: 0 0% 10%; /* Abu gelap */
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 210 100% 38%; /* Biru aksen: #0070C0 */
+    --popover-foreground: 224 71% 4%;
+
+    --primary: 221 83% 53%; /* Modern Blue: #3B82F6 */
+    --primary-foreground: 0 0% 100%; /* White */
+
+    --secondary: 220 13% 91%; /* Light Gray 2: #E5E7EB */
+    --secondary-foreground: 224 71% 4%;
+
+    --muted: 220 13% 91%;
+    --muted-foreground: 215 14% 47%; /* Medium Gray: #6B7280 */
+
+    --accent: 152 76% 44%; /* Emerald Green: #10B981 */
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 10%;
-    --chart-1: 356 100% 45%; /* Merah Telkom */
-    --chart-2: 210 100% 38%; /* Biru aksen */
-    --chart-3: 0 0% 60%; /* Abu */
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+
+    --destructive: 0 84% 60%; /* Red */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 88%; /* Gray border */
+    --input: 220 13% 88%;
+    --ring: 221 83% 53%;
+
     --radius: 0.5rem;
-    --color-primary: #D51C24;
-    --color-gray-dark: #6D6E71;
-    --color-gray-light: #B0B1B3;
-    --color-bg: #FFFFFF;
-    --color-success: #27AE60;
-    --color-warning: #FFC107;
-    --color-error: #B71C1C;
-    --color-info: #1976D2;
   }
-  
-  body {
-    font-family: var(--font-manrope);
-  }
+
   .dark {
-    --background: 0 0% 10%; /* Abu gelap */
-    --foreground: 0 0% 98%; /* Putih */
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 356 100% 45%; /* Merah Telkom */
-    --primary-foreground: 0 0% 100%; /* Putih */
-    --secondary: 0 0% 20%; /* Abu gelap */
-    --secondary-foreground: 0 0% 98%; /* Putih */
-    --muted: 0 0% 20%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 210 100% 38%; /* Biru aksen */
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 356 100% 45%;
-    --chart-2: 210 100% 38%;
-    --chart-3: 0 0% 60%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --background: 224 71% 4%;
+    --foreground: 210 20% 98%;
+
+    --card: 224 71% 4%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 224 71% 4%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 210 20% 98%;
+    --primary-foreground: 224 71% 4%;
+
+    --secondary: 215 28% 17%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 215 28% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 210 20% 98%;
+    --accent-foreground: 224 71% 4%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 216 15% 84%;
   }
-}
-
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-rgb: 249, 250, 251;
-}
-
-body {
-  background: rgb(var(--background-rgb));
 }
 
 @layer base {
@@ -86,5 +72,6 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 } 
